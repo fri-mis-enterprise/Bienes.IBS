@@ -1,0 +1,66 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Welcome Back</h2>
+                    <form id="account" method="post" autocomplete="off">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Username" class="form-control" id="username" placeholder="Username" />
+                            <label for="username">Username</label>
+                            <span asp-validation-for="Input.Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Password" class="form-control" placeholder="Password" type="password" />
+                            <label for="Input_Password">Password</label>
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button id="login-submit" type="submit" class="btn btn-primary btn-lg">Log in</button>
+                        </div>
+
+                        @* Optional sign up link
+                        <div class="text-center mt-3">
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none">Create an account</a>
+                        </div>
+                        *@
+                    </form>
+
+                    @if (Model.CompanyPortalLinks.Count != 0)
+                    {
+                        <div class="border-top mt-4 pt-4">
+                            <p class="text-muted small text-center mb-3">Other company portals</p>
+                            <div class="d-grid gap-2">
+                                @foreach (var companyPortal in Model.CompanyPortalLinks)
+                                {
+                                    <a class="btn btn-outline-secondary d-flex align-items-center justify-content-between"
+                                       href="@companyPortal.Url"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        <span>@companyPortal.Name</span>
+                                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
