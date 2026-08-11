@@ -167,4 +167,6 @@ app.MapHub<NotificationHub>("/notificationHub");
 // Initialize the IConfiguration to get the calendarific_api_key
 DateTimeHelper.Initialize(app.Configuration);
 
+await ApplicationDbSeeder.SeedAsync(app.Services);
+
 app.Run();
