@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class CheckVoucherRepository : Repository<FilprideCheckVoucherHeader>, ICheckVoucherRepository
+    public class CheckVoucherRepository : Repository<CheckVoucherHeader>, ICheckVoucherRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -31,7 +31,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -56,7 +56,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -83,7 +83,7 @@ namespace IBS.DataAccess.Repository.Filpride
             var invoiceVoucher = await GetAsync(i => i.CheckVoucherHeaderId == invoiceVoucherId, cancellationToken)
                                  ?? throw new InvalidOperationException($"Check voucher with id '{invoiceVoucherId}' not found.");
 
-            var detailsVoucher = await _db.FilprideCheckVoucherDetails
+            var detailsVoucher = await _db.CheckVoucherDetails
                 .Where(cvd => cvd.TransactionNo == invoiceVoucher.CheckVoucherHeaderNo
                               && cvd.AccountNo == "201020200")
                 .Select(cvd => cvd.Credit)
@@ -103,7 +103,7 @@ namespace IBS.DataAccess.Repository.Filpride
             var invoiceVoucher = await GetAsync(i => i.CheckVoucherHeaderId == invoiceVoucherId, cancellationToken)
                 ?? throw new InvalidOperationException($"Check voucher with id '{invoiceVoucherId}' not found.");
 
-            var detailsVoucher = await _db.FilprideCheckVoucherDetails
+            var detailsVoucher = await _db.CheckVoucherDetails
                 .Where(cvd => invoiceVoucher.CheckVoucherHeaderNo!.Contains(cvd.TransactionNo))
                 .Select(cvd => cvd.AmountPaid)
                 .SumAsync(cancellationToken);
@@ -116,7 +116,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        public override async Task<FilprideCheckVoucherHeader?> GetAsync(Expression<Func<FilprideCheckVoucherHeader, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<CheckVoucherHeader?> GetAsync(Expression<Func<CheckVoucherHeader, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(cv => cv.BankAccount)
@@ -124,9 +124,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override async Task<IEnumerable<FilprideCheckVoucherHeader>> GetAllAsync(Expression<Func<FilprideCheckVoucherHeader, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<CheckVoucherHeader>> GetAllAsync(Expression<Func<CheckVoucherHeader, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideCheckVoucherHeader> query = dbSet
+            IQueryable<CheckVoucherHeader> query = dbSet
                 .Include(cv => cv.BankAccount)
                 .Include(cv => cv.Supplier);
 
@@ -138,9 +138,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideCheckVoucherHeader> GetAllQuery(Expression<Func<FilprideCheckVoucherHeader, bool>>? filter = null)
+        public override IQueryable<CheckVoucherHeader> GetAllQuery(Expression<Func<CheckVoucherHeader, bool>>? filter = null)
         {
-            IQueryable<FilprideCheckVoucherHeader> query = dbSet
+            IQueryable<CheckVoucherHeader> query = dbSet
                 .Include(cv => cv.BankAccount)
                 .Include(cv => cv.Supplier)
                 .AsSplitQuery()
@@ -167,7 +167,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeMultipleInvoiceForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -192,7 +192,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeMultipleInvoiceForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -227,7 +227,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeMultiplePaymentForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -252,7 +252,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeMultiplePaymentForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCv = await _db
-                .FilprideCheckVoucherHeaders
+                .CheckVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.CheckVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.CheckVoucherHeaderNo)
@@ -274,20 +274,20 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 4) + incrementedNumber.ToString("D8");
         }
 
-        public async Task PostAsync(FilprideCheckVoucherHeader header,
-            IEnumerable<FilprideCheckVoucherDetail> details,
+        public async Task PostAsync(CheckVoucherHeader header,
+            IEnumerable<CheckVoucherDetail> details,
             CancellationToken cancellationToken = default)
         {
             #region --General Ledger Book Recording(CV)--
 
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             foreach (var detail in details)
             {
                 var account = accountTitlesDto.Find(c => c.AccountNumber == detail.AccountNo)
                               ?? throw new ArgumentException($"Account title '{detail.AccountNo}' not found.");
                 ledgers.Add(
-                        new FilprideGeneralLedgerBook
+                        new GeneralLedgerBook
                         {
                             Date = header.Date,
                             Reference = header.CheckVoucherHeaderNo!,
@@ -313,10 +313,11 @@ namespace IBS.DataAccess.Repository.Filpride
                 throw new ArgumentException("Debit and Credit is not equal, check your entries.");
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             #endregion --General Ledger Book Recording(CV)--
         }
     }
 }
+

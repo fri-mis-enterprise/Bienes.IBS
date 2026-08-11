@@ -1,4 +1,4 @@
-﻿@model IEnumerable<FilprideAuthorityToLoad>
+@model IEnumerable<AuthorityToLoad>
 
 @{
     ViewData["Title"] = "Authority To Load";
@@ -63,7 +63,7 @@
                         return $.extend({}, d, {
                             __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
 
-                            // NEW PARAMETER FOR DATE — this goes to controller
+                            // NEW PARAMETER FOR DATE � this goes to controller
                             filterDate: filterValue
                         });
                     },

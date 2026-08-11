@@ -72,7 +72,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             viewModel.MinDate = await _unitOfWork.GetMinimumPeriodBasedOnThePostedPeriods(Module.ProvisionalReceipt, cancellationToken);
         }
 
-        private static PREditViewModel MapToEditViewModel(FilprideProvisionalReceipt model)
+        private static PREditViewModel MapToEditViewModel(ProvisionalReceipt model)
         {
             return new PREditViewModel
             {
@@ -99,7 +99,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             };
         }
 
-        private static void MapFormToEntity(ProvisionalReceiptViewModel viewModel, FilprideProvisionalReceipt model)
+        private static void MapFormToEntity(ProvisionalReceiptViewModel viewModel, ProvisionalReceipt model)
         {
             model.TransactionDate = viewModel.TransactionDate;
             model.SupplierId = viewModel.SupplierId;
@@ -258,7 +258,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptCreate))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -279,7 +279,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptCreate))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PRCreateViewModel viewModel, CancellationToken cancellationToken)
@@ -312,7 +312,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             try
             {
                 var userFullName = GetUserFullName();
-                var model = new FilprideProvisionalReceipt
+                var model = new ProvisionalReceipt
                 {
                     SeriesNumber = await _unitOfWork.ProvisionalReceipt
                         .GenerateSeriesNumberAsync(companyClaims, viewModel.Type, cancellationToken),
@@ -325,11 +325,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 MapFormToEntity(viewModel, model);
                 model.Type = viewModel.Type;
 
-                await _dbContext.FilprideProvisionalReceipts.AddAsync(model, cancellationToken);
+                await _dbContext.ProvisionalReceipts.AddAsync(model, cancellationToken);
 
-                var auditTrail = new FilprideAuditTrail(userFullName,
+                var auditTrail = new AuditTrail(userFullName,
                     $"Create new provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -347,7 +347,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptEdit))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int? id, CancellationToken cancellationToken)
         {
@@ -382,7 +382,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptEdit))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(PREditViewModel viewModel, CancellationToken cancellationToken)
@@ -426,9 +426,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.EditedBy = GetUserFullName();
                 model.EditedDate = DateTimeHelper.GetCurrentPhilippineTime();
 
-                var auditTrail = new FilprideAuditTrail(GetUserFullName(),
+                var auditTrail = new AuditTrail(GetUserFullName(),
                     $"Edited provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -446,7 +446,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptPreview))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptPreview))]
         public async Task<IActionResult> Print(int id, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
@@ -467,7 +467,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(model);
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptPreview))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptPreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
@@ -494,9 +494,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     model.IsPrinted = true;
 
                     var printedBy = GetUserFullName();
-                    var auditTrail = new FilprideAuditTrail(printedBy,
+                    var auditTrail = new AuditTrail(printedBy,
                         $"Printed original copy of provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                    await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                    await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
                     await _dbContext.SaveChangesAsync(cancellationToken);
                 }
 
@@ -514,7 +514,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Print), new { id });
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptPost))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptPost))]
         public async Task<IActionResult> Post(int id, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
@@ -546,9 +546,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.PostedDate = DateTimeHelper.GetCurrentPhilippineTime();
                 model.Status = nameof(CollectionReceiptStatus.Posted);
 
-                var auditTrail = new FilprideAuditTrail(model.PostedBy,
+                var auditTrail = new AuditTrail(model.PostedBy,
                     $"Posted provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -596,9 +596,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 await _unitOfWork.GeneralLedger.ReverseEntries(model.SeriesNumber, cancellationToken);
 
-                var auditTrail = new FilprideAuditTrail(model.VoidedBy,
+                var auditTrail = new AuditTrail(model.VoidedBy,
                     $"Voided provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -615,7 +615,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptCancel))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptCancel))]
         public async Task<IActionResult> Cancel(int id, string? cancellationRemarks, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
@@ -642,9 +642,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.CancellationRemarks = cancellationRemarks;
                 model.Status = nameof(CollectionReceiptStatus.Canceled);
 
-                var auditTrail = new FilprideAuditTrail(model.CanceledBy,
+                var auditTrail = new AuditTrail(model.CanceledBy,
                     $"Canceled provisional receipt# {model.SeriesNumber}", "Provisional Receipt", companyClaims);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -661,7 +661,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptAddDepositInfo))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptAddDepositInfo))]
         [HttpGet]
         public async Task<IActionResult> Deposit(int id, int bankId, DateOnly depositDate, CancellationToken cancellationToken)
         {
@@ -672,7 +672,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return BadRequest();
             }
 
-            var bank = await _unitOfWork.FilprideBankAccount.GetAsync(b => b.BankAccountId == bankId, cancellationToken);
+            var bank = await _unitOfWork.BankAccount.GetAsync(b => b.BankAccountId == bankId, cancellationToken);
             var model = await _unitOfWork.ProvisionalReceipt
                 .GetAsync(pr => pr.Id == id && pr.Company == companyClaims, cancellationToken);
 
@@ -692,9 +692,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.ClearedDate = null;
                 model.Status = nameof(CollectionReceiptStatus.Deposited);
 
-                var auditTrail = new FilprideAuditTrail(GetUserFullName(),
+                var auditTrail = new AuditTrail(GetUserFullName(),
                     $"Record deposit date of provisional receipt#{model.SeriesNumber}", "Provisional Receipt", model.Company);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -711,7 +711,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptReturnCheck))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptReturnCheck))]
         [HttpGet]
         public async Task<IActionResult> Return(int id, CancellationToken cancellationToken)
         {
@@ -738,9 +738,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.ClearedDate = null;
                 model.Status = nameof(CollectionReceiptStatus.Returned);
 
-                var auditTrail = new FilprideAuditTrail(GetUserFullName(),
+                var auditTrail = new AuditTrail(GetUserFullName(),
                     $"Return checks of provisional receipt#{model.SeriesNumber}", "Provisional Receipt", model.Company);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -757,7 +757,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptRedeposit))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptRedeposit))]
         [HttpGet]
         public async Task<IActionResult> Redeposit(int id, DateOnly redepositDate, CancellationToken cancellationToken)
         {
@@ -784,9 +784,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.ClearedDate = null;
                 model.Status = nameof(CollectionReceiptStatus.Redeposited);
 
-                var auditTrail = new FilprideAuditTrail(GetUserFullName(),
+                var auditTrail = new AuditTrail(GetUserFullName(),
                     $"Redeposit provisional receipt#{model.SeriesNumber}", "Provisional Receipt", model.Company);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -803,7 +803,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptApplyClearingDate))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptApplyClearingDate))]
         [HttpGet]
         public async Task<IActionResult> ApplyClearingDate(int id, DateOnly clearingDate, CancellationToken cancellationToken)
         {
@@ -835,9 +835,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 model.Status = nameof(CollectionReceiptStatus.Cleared);
                 await _unitOfWork.ProvisionalReceipt.DepositAsync(model, cancellationToken);
 
-                var auditTrail = new FilprideAuditTrail(GetUserFullName(),
+                var auditTrail = new AuditTrail(GetUserFullName(),
                     $"Apply clearing date for provisional receipt#{model.SeriesNumber}", "Provisional Receipt", model.Company);
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrail, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrail, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -854,7 +854,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Policy = nameof(ProvisionalReceipt.ProvisionalReceiptUnpost))]
+        [Authorize(Policy = nameof(ProvisionalReceiptAction.ProvisionalReceiptUnpost))]
         public async Task<IActionResult> Unpost(int id, CancellationToken cancellationToken)
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -877,8 +877,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), $"Unposted provisional receipt# {provisionalReceipt.SeriesNumber}", "Provisional Receipt", provisionalReceipt.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), $"Unposted provisional receipt# {provisionalReceipt.SeriesNumber}", "Provisional Receipt", provisionalReceipt.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -899,3 +899,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

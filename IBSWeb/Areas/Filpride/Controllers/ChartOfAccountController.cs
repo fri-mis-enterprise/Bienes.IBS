@@ -66,8 +66,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
             ViewBag.ShowHidden = showHidden;
 
             var accounts = showHidden
-                ? await _unitOfWork.FilprideChartOfAccount.GetAllAsyncIgnoreQueryFilters(cancellationToken: cancellationToken)
-                : await _unitOfWork.FilprideChartOfAccount.GetAllAsync(cancellationToken: cancellationToken);
+                ? await _unitOfWork.ChartOfAccount.GetAllAsyncIgnoreQueryFilters(cancellationToken: cancellationToken)
+                : await _unitOfWork.ChartOfAccount.GetAllAsync(cancellationToken: cancellationToken);
 
             return View(accounts.Where(c => c.Level == 1)
                 .ToList());
@@ -80,7 +80,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var parentAccount = await _unitOfWork.FilprideChartOfAccount
+                var parentAccount = await _unitOfWork.ChartOfAccount
                     .GetAsyncIgnoreQueryFilters(c => c.AccountId == parentId, cancellationToken);
 
                 if (parentAccount == null)
@@ -88,7 +88,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     throw new InvalidOperationException("Parent Account not found");
                 }
 
-                var lastAccount = (await _unitOfWork.FilprideChartOfAccount
+                var lastAccount = (await _unitOfWork.ChartOfAccount
                         .GetAllAsync(c => c.ParentAccountId == parentId, cancellationToken: cancellationToken))
                     .OrderByDescending(c => c.AccountNumber)
                     .FirstOrDefault();
@@ -97,7 +97,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var levelToCreate = parentAccount.Level + 1;
 
-                var newAccount = new FilprideChartOfAccount
+                var newAccount = new ChartOfAccount
                 {
                     IsMain = false,
                     AccountType = parentAccount?.AccountType,
@@ -119,15 +119,15 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         break;
                 }
 
-                await _unitOfWork.FilprideChartOfAccount.AddAsync(newAccount, cancellationToken);
+                await _unitOfWork.ChartOfAccount.AddAsync(newAccount, cancellationToken);
                 await _unitOfWork.SaveAsync(cancellationToken);
                 await _cacheService.RemoveAsync($"coa:{await GetCompanyClaimAsync()}", cancellationToken);
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Created new Account #{newAccount.AccountNumber}", "Chart of Accounts", (await GetCompanyClaimAsync())! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -147,7 +147,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int accountId, string accountName, CancellationToken cancellationToken)
         {
-            var existingAccount = await _unitOfWork.FilprideChartOfAccount
+            var existingAccount = await _unitOfWork.ChartOfAccount
                 .GetAsyncIgnoreQueryFilters(x => x.AccountId == accountId, cancellationToken);
 
             if (existingAccount == null)
@@ -167,9 +167,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Edited Account #{existingAccount.AccountNumber}", "Chart of Accounts", (await GetCompanyClaimAsync())! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -190,7 +190,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleHidden(int accountId, bool showHidden = false, CancellationToken cancellationToken = default)
         {
-            var existingAccount = await _unitOfWork.FilprideChartOfAccount
+            var existingAccount = await _unitOfWork.ChartOfAccount
                 .GetAsyncIgnoreQueryFilters(x => x.AccountId == accountId, cancellationToken);
 
             if (existingAccount == null)
@@ -210,9 +210,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var action = existingAccount.IsHidden ? "Hidden" : "Unhidden";
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(),
+                AuditTrail auditTrailBook = new(GetUserFullName(),
                     $"{action} Account #{existingAccount.AccountNumber}", "Chart of Accounts", (await GetCompanyClaimAsync())!);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
                 TempData["success"] = $"Account {existingAccount.AccountNumber} {action.ToLowerInvariant()} successfully";
@@ -240,7 +240,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var chartOfAccounts = _unitOfWork.FilprideChartOfAccount
+                var chartOfAccounts = _unitOfWork.ChartOfAccount
                     .GetAllQueryIgnoreQueryFilters();
 
                 var totalRecords = await chartOfAccounts.CountAsync(cancellationToken);
@@ -292,7 +292,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalFilteredRecords = await chartOfAccounts.CountAsync(cancellationToken);
 
                 // Apply pagination - HANDLE -1 FOR "ALL"
-                IQueryable<FilprideChartOfAccount> pagedChartOfAccounts;
+                IQueryable<ChartOfAccount> pagedChartOfAccounts;
 
                 if (parameters.Length == -1)
                 {
@@ -356,7 +356,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var recordIds = selectedRecord.Split(',').Select(int.Parse).ToList();
 
                 // Retrieve the selected invoices from the database
-                var selectedList = (await _unitOfWork.FilprideChartOfAccount
+                var selectedList = (await _unitOfWork.ChartOfAccount
                     .GetAllAsync(coa => recordIds.Contains(coa.AccountId), cancellationToken))
                     .OrderBy(coa => coa.AccountId)
                     .ToList();
@@ -430,7 +430,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllChartOfAccountIds(CancellationToken cancellationToken)
         {
-            var coaIds = await _dbContext.FilprideChartOfAccounts
+            var coaIds = await _dbContext.ChartOfAccounts
                 .IgnoreQueryFilters()
                 .Select(coa => coa.AccountId) // Assuming Id is the primary key
                 .ToListAsync(cancellationToken);
@@ -438,3 +438,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

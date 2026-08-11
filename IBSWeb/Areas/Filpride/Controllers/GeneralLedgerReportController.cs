@@ -260,8 +260,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by transaction report quest pdf", "General Ledger Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by transaction report quest pdf", "General Ledger Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -411,8 +411,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by transaction report excel file", "General Ledger Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by transaction report excel file", "General Ledger Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -436,7 +436,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var viewModel = new GeneralLedgerReportViewModel
             {
-                ChartOfAccounts = await _dbContext.FilprideChartOfAccounts
+                ChartOfAccounts = await _dbContext.ChartOfAccounts
                     .IgnoreQueryFilters()
                     .Where(coa => !coa.HasChildren)
                     .OrderBy(coa => coa.AccountNumber)
@@ -474,7 +474,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     .FirstOrDefault();
 
-                var generalLedgerByAccountNo = await _dbContext.FilprideGeneralLedgerBooks
+                var generalLedgerByAccountNo = await _dbContext.GeneralLedgerBooks
                     .Where(g =>
                         g.Date >= model.DateFrom && g.Date <= model.DateTo &&
                         (selectedAccountNo == null || g.AccountNo == selectedAccountNo) &&
@@ -487,7 +487,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return RedirectToAction(nameof(GeneralLedgerReportByAccountNumber));
                 }
 
-                var chartOfAccount = await _unitOfWork.FilprideChartOfAccount
+                var chartOfAccount = await _unitOfWork.ChartOfAccount
                     .GetAllAsyncIgnoreQueryFilters(cancellationToken: cancellationToken);
                 var subAccountNames = await ResolveSubAccountNamesAsync(generalLedgerByAccountNo, cancellationToken);
 
@@ -670,8 +670,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by account number report quest pdf", "General Ledger Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by account number report quest pdf", "General Ledger Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -709,10 +709,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     .FirstOrDefault();
 
-                var selectedAccount = await _unitOfWork.FilprideChartOfAccount
+                var selectedAccount = await _unitOfWork.ChartOfAccount
                     .GetAsyncIgnoreQueryFilters(coa => selectedAccountNo != null && coa.AccountNumber == selectedAccountNo, cancellationToken);
 
-                var generalLedgerByAccountNo = await _dbContext.FilprideGeneralLedgerBooks
+                var generalLedgerByAccountNo = await _dbContext.GeneralLedgerBooks
                     .Where(g =>
                         g.Date >= dateFrom && g.Date <= dateTo &&
                         (selectedAccount == null || g.AccountNo == selectedAccount.AccountNumber) &&
@@ -731,7 +731,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Distinct()
                     .ToList();
 
-                var accounts = await _unitOfWork.FilprideChartOfAccount
+                var accounts = await _unitOfWork.ChartOfAccount
                     .GetAllAsyncIgnoreQueryFilters(a => accountNumbers.Contains(a.AccountNumber!), cancellationToken);
 
                 var accountDictionary = accounts
@@ -739,7 +739,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToDictionary(a => a.AccountNumber!, a => a);
 
                 var previousPeriodEndDate = dateFrom.AddDays(-1);
-                var glPeriodBalances = await _dbContext.FilprideGlPeriodBalances
+                var glPeriodBalances = await _dbContext.GlPeriodBalances
                     .IgnoreQueryFilters()
                     .Include(g => g.Account)
                     .Where(pb => accountNumbers.Contains(pb.Account.AccountNumber!) &&
@@ -935,8 +935,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by account number report excel file", "General Ledger Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate general ledger by account number report excel file", "General Ledger Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -1192,12 +1192,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     "Generate general ledger journal voucher - updating selling price report excel file",
                     "General Ledger JV Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail
 
@@ -1359,12 +1359,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     "Generate general ledger journal voucher - updating unit cost report excel file",
                     "General Ledger JV Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail
 
@@ -1528,12 +1528,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     "Generate general ledger journal voucher - updating commission report excel file",
                     "General Ledger JV Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail
 
@@ -1695,12 +1695,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     "Generate general ledger journal voucher - updating freight report excel file",
                     "General Ledger JV Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail
 
@@ -1728,7 +1728,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var viewModel = new GeneralLedgerReportViewModel
             {
-                ChartOfAccounts = await _dbContext.FilprideChartOfAccounts
+                ChartOfAccounts = await _dbContext.ChartOfAccounts
                     .IgnoreQueryFilters()
                     .Where(coa => !coa.HasChildren)
                     .OrderBy(coa => coa.AccountNumber)
@@ -1776,7 +1776,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .FirstOrDefault();
 
                 // Query subsidiary ledger balances from database
-                var subsidiaryLedgers = await _dbContext.FilprideGlSubAccountBalances
+                var subsidiaryLedgers = await _dbContext.GlSubAccountBalances
                     .IgnoreQueryFilters()
                     .Include(s => s.Account)
                     .Where(s =>
@@ -1814,7 +1814,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 worksheet.Cells["A7"].Value = "Date and Time Generated:";
 
                 var selectedAccount = selectedAccountNo != null
-                    ? await _unitOfWork.FilprideChartOfAccount
+                    ? await _unitOfWork.ChartOfAccount
                         .GetAsyncIgnoreQueryFilters(coa => coa.AccountNumber == selectedAccountNo, cancellationToken)
                     : null;
 
@@ -1963,12 +1963,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 worksheet.View.FreezePanes(headerRow + 1, 1);
 
                 // Audit Trail
-                FilprideAuditTrail auditTrail = new(
+                AuditTrail auditTrail = new(
                     GetUserFullName(),
                     "Generate subsidiary ledger report excel file",
                     "Subsidiary Ledger Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrail, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrail, cancellationToken);
 
                 var excelBytes = await package.GetAsByteArrayAsync(cancellationToken);
 
@@ -1989,7 +1989,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         #endregion -- Generate Subsidiary Ledger as Excel File
 
         private async Task<Dictionary<int, string?>> ResolveSubAccountNamesAsync(
-            IReadOnlyCollection<FilprideGeneralLedgerBook> generalLedgerBooks,
+            IReadOnlyCollection<GeneralLedgerBook> generalLedgerBooks,
             CancellationToken cancellationToken)
         {
             var salesDrReferences = generalLedgerBooks
@@ -2000,7 +2000,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             var deliveryReceipts = salesDrReferences.Count == 0
                 ? new Dictionary<string, DeliveryReceiptSubAccountNames>()
-                : await _dbContext.FilprideDeliveryReceipts
+                : await _dbContext.DeliveryReceipts
                     .Where(dr => salesDrReferences.Contains(dr.DeliveryReceiptNo))
                     .Select(dr => new
                     {
@@ -2026,8 +2026,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
 
         private static string? ResolveSubAccountName(
-            FilprideGeneralLedgerBook gl,
-            ILookup<string, FilprideGeneralLedgerBook> generalLedgerBooksByReference,
+            GeneralLedgerBook gl,
+            ILookup<string, GeneralLedgerBook> generalLedgerBooksByReference,
             IReadOnlyDictionary<string, DeliveryReceiptSubAccountNames> deliveryReceipts)
         {
             if (!string.IsNullOrWhiteSpace(gl.SubAccountName))
@@ -2046,8 +2046,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
 
         private static string? ResolveDisbursementSubAccountName(
-            FilprideGeneralLedgerBook gl,
-            ILookup<string, FilprideGeneralLedgerBook> generalLedgerBooksByReference)
+            GeneralLedgerBook gl,
+            ILookup<string, GeneralLedgerBook> generalLedgerBooksByReference)
         {
             if (gl.Reference.StartsWith("CVN") || gl.Reference.StartsWith("INV"))
             {
@@ -2064,8 +2064,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
 
         private static string? ResolveSalesSubAccountName(
-            FilprideGeneralLedgerBook gl,
-            ILookup<string, FilprideGeneralLedgerBook> generalLedgerBooksByReference,
+            GeneralLedgerBook gl,
+            ILookup<string, GeneralLedgerBook> generalLedgerBooksByReference,
             IReadOnlyDictionary<string, DeliveryReceiptSubAccountNames> deliveryReceipts)
         {
             if (!gl.Reference.StartsWith("DR"))
@@ -2094,7 +2094,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
 
         private static string? FindSubAccountName(
-            ILookup<string, FilprideGeneralLedgerBook> generalLedgerBooksByReference,
+            ILookup<string, GeneralLedgerBook> generalLedgerBooksByReference,
             string reference,
             string accountNo)
         {
@@ -2127,3 +2127,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

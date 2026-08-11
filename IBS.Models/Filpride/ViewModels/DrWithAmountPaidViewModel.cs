@@ -4,7 +4,7 @@ namespace IBS.Models.Filpride.ViewModels
 {
     public class DrWithAmountPaidViewModel
     {
-        public FilprideDeliveryReceipt DeliveryReceipt { get; set; } = null!;
+        public DeliveryReceipt DeliveryReceipt { get; set; } = null!;
         public decimal AmountPaid { get; set; }
     }
 

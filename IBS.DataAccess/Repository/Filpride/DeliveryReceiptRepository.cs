@@ -13,7 +13,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class DeliveryReceiptRepository : Repository<FilprideDeliveryReceipt>, IDeliveryReceiptRepository
+    public class DeliveryReceiptRepository : Repository<DeliveryReceipt>, IDeliveryReceiptRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -35,7 +35,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateDocumentedCodeAsync(string companyClaims, CancellationToken cancellationToken = default)
         {
             var lastDr = await _db
-                .FilprideDeliveryReceipts
+                .DeliveryReceipts
                 .AsNoTracking()
                 .OrderByDescending(x => x.DeliveryReceiptNo.Length)
                 .ThenByDescending(x => x.DeliveryReceiptNo)
@@ -60,7 +60,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateUnDocumentedCodeAsync(string companyClaims, CancellationToken cancellationToken = default)
         {
             var lastDr = await _db
-                .FilprideDeliveryReceipts
+                .DeliveryReceipts
                 .AsNoTracking()
                 .OrderByDescending(x => x.DeliveryReceiptNo.Length)
                 .ThenByDescending(x => x.DeliveryReceiptNo)
@@ -82,9 +82,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D9");
         }
 
-        public override async Task<IEnumerable<FilprideDeliveryReceipt>> GetAllAsync(Expression<Func<FilprideDeliveryReceipt, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<DeliveryReceipt>> GetAllAsync(Expression<Func<DeliveryReceipt, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideDeliveryReceipt> query = dbSet
+            IQueryable<DeliveryReceipt> query = dbSet
                 .Include(dr => dr.CustomerOrderSlip).ThenInclude(po => po!.Product)
                 .Include(cos => cos.PurchaseOrder).ThenInclude(po => po!.Supplier)
                 .Include(dr => dr.Hauler)
@@ -108,9 +108,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideDeliveryReceipt> GetAllQuery(Expression<Func<FilprideDeliveryReceipt, bool>>? filter = null)
+        public override IQueryable<DeliveryReceipt> GetAllQuery(Expression<Func<DeliveryReceipt, bool>>? filter = null)
         {
-            IQueryable<FilprideDeliveryReceipt> query = dbSet
+            IQueryable<DeliveryReceipt> query = dbSet
                 .Include(dr => dr.CustomerOrderSlip).ThenInclude(po => po!.Product)
                 .Include(cos => cos.PurchaseOrder).ThenInclude(po => po!.Supplier)
                 .Include(dr => dr.Hauler)
@@ -133,7 +133,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return query;
         }
 
-        public override async Task<FilprideDeliveryReceipt?> GetAsync(Expression<Func<FilprideDeliveryReceipt, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<DeliveryReceipt?> GetAsync(Expression<Func<DeliveryReceipt, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(dr => dr.CustomerOrderSlip).ThenInclude(po => po!.Product)
@@ -158,11 +158,11 @@ namespace IBS.DataAccess.Repository.Filpride
             var existingRecord = await GetAsync(dr => dr.DeliveryReceiptId == viewModel.DeliveryReceiptId,
                 cancellationToken) ?? throw new NullReferenceException("DeliveryReceipt not found");
 
-            var customerOrderSlip = await _db.FilprideCustomerOrderSlips
+            var customerOrderSlip = await _db.CustomerOrderSlips
                 .FirstOrDefaultAsync(cos => cos.CustomerOrderSlipId == viewModel.CustomerOrderSlipId,
                     cancellationToken) ?? throw new NullReferenceException("CustomerOrderSlip not found");
 
-            var hauler = await _db.FilprideSuppliers.FirstOrDefaultAsync(x => x.SupplierId == viewModel.HaulerId, cancellationToken);
+            var hauler = await _db.Suppliers.FirstOrDefaultAsync(x => x.SupplierId == viewModel.HaulerId, cancellationToken);
 
             #region--Update COS
 
@@ -221,8 +221,8 @@ namespace IBS.DataAccess.Repository.Filpride
                 existingRecord.EditedBy = viewModel.CurrentUser;
                 existingRecord.EditedDate = DateTimeHelper.GetCurrentPhilippineTime();
 
-                FilprideAuditTrail auditTrailBook = new(existingRecord.EditedBy!, $"Edit delivery receipt# {existingRecord.DeliveryReceiptNo}", "Delivery Receipt", existingRecord.Company);
-                await _db.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingRecord.EditedBy!, $"Edit delivery receipt# {existingRecord.DeliveryReceiptNo}", "Delivery Receipt", existingRecord.Company);
+                await _db.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -234,7 +234,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetDeliveryReceiptListAsync(string companyClaims, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideDeliveryReceipts
+            return await _db.DeliveryReceipts
                 .OrderBy(dr => dr.DeliveryReceiptId)
                 .Where(dr => dr.DeliveredDate != null &&
                              dr.Company == companyClaims)
@@ -248,7 +248,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetDeliveryReceiptListForSalesInvoice(string companyClaims, int cosId, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideDeliveryReceipts
+            return await _db.DeliveryReceipts
                     .OrderBy(dr => dr.DeliveryReceiptId)
                     .Where(dr =>
                         dr.CustomerOrderSlipId == cosId &&
@@ -264,13 +264,13 @@ namespace IBS.DataAccess.Repository.Filpride
                     .ToListAsync(cancellationToken);
         }
 
-        public async Task PostAsync(FilprideDeliveryReceipt deliveryReceipt, CancellationToken cancellationToken = default)
+        public async Task PostAsync(DeliveryReceipt deliveryReceipt, CancellationToken cancellationToken = default)
         {
             try
             {
                 #region General Ledger Book Recording
 
-                var ledgers = new List<FilprideGeneralLedgerBook>();
+                var ledgers = new List<GeneralLedgerBook>();
                 var unitOfWork = new UnitOfWork(_db);
                 var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
                 var cashInBankTitle = accountTitlesDto.Find(c => c.AccountNumber == "101010100") ?? throw new ArgumentException("Account title '101010100' not found.");
@@ -284,7 +284,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 var detailLines = deliveryReceipt.Details.Any()
                     ? deliveryReceipt.Details.ToList()
-                    : new List<FilprideDeliveryReceiptDetail>
+                    : new List<DeliveryReceiptDetail>
                     {
                         new()
                         {
@@ -316,8 +316,8 @@ namespace IBS.DataAccess.Repository.Filpride
                     .ToList();
 
                 var cosLookup = missingCosIds.Count == 0
-                    ? new Dictionary<int, FilprideCustomerOrderSlip>()
-                    : await _db.FilprideCustomerOrderSlips
+                    ? new Dictionary<int, CustomerOrderSlip>()
+                    : await _db.CustomerOrderSlips
                         .Include(c => c.Product)
                         .Include(c => c.Customer)
                         .Include(c => c.Commissionee)
@@ -326,8 +326,8 @@ namespace IBS.DataAccess.Repository.Filpride
                         .ToDictionaryAsync(c => c.CustomerOrderSlipId, cancellationToken);
 
                 var poLookup = missingPoIds.Count == 0
-                    ? new Dictionary<int, IBS.Models.Filpride.AccountsPayable.FilpridePurchaseOrder>()
-                    : await _db.FilpridePurchaseOrders
+                    ? new Dictionary<int, IBS.Models.Filpride.AccountsPayable.PurchaseOrder>()
+                    : await _db.PurchaseOrders
                         .Include(p => p.Product)
                         .Include(p => p.Supplier)
                         .Include(p => p.ActualPrices)
@@ -395,7 +395,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                     if (arTradeCwtAmount > 0)
                     {
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -414,7 +414,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                     if (arTradeCwvAmount > 0)
                     {
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -431,7 +431,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         });
                     }
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -450,7 +450,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         ModuleType = nameof(ModuleType.Sales)
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -466,7 +466,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         ModuleType = nameof(ModuleType.Sales)
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -482,7 +482,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         ModuleType = nameof(ModuleType.Sales)
                     });
 
-                    var inventoryTransactions = await _db.FilprideInventories
+                    var inventoryTransactions = await _db.Inventories
                         .Where(i => i.Reference == deliveryReceipt.DeliveryReceiptNo
                                     && i.Company == deliveryReceipt.Company
                                     && i.ProductId == detail.ProductId
@@ -496,12 +496,12 @@ namespace IBS.DataAccess.Repository.Filpride
                     else
                     {
                         var poPrice = RoundToFourDecimalPlaces(
-                            await unitOfWork.FilpridePurchaseOrder.GetPurchaseOrderCost(detail.PurchaseOrderId, cancellationToken) + deliveredFreight);
+                            await unitOfWork.PurchaseOrder.GetPurchaseOrderCost(detail.PurchaseOrderId, cancellationToken) + deliveredFreight);
                         var cogsCost = purchaseOrder.VatType == SD.VatType_Vatable ? ComputeNetOfVat(poPrice) : poPrice;
                         cogsNetOfVat = detail.Quantity * cogsCost;
                     }
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -517,7 +517,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         ModuleType = nameof(ModuleType.Sales)
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -542,7 +542,7 @@ namespace IBS.DataAccess.Repository.Filpride
                             ? ComputeVatAmount(freightNetOfVat)
                             : 0m;
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -560,7 +560,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                         if (freightVatAmount > 0)
                         {
-                            ledgers.Add(new FilprideGeneralLedgerBook
+                            ledgers.Add(new GeneralLedgerBook
                             {
                                 Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                                 Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -587,7 +587,7 @@ namespace IBS.DataAccess.Repository.Filpride
                             ? ComputeVatAmount(eccNetOfVat)
                             : 0m;
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -605,7 +605,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                         if (eccVatAmount > 0)
                         {
-                            ledgers.Add(new FilprideGeneralLedgerBook
+                            ledgers.Add(new GeneralLedgerBook
                             {
                                 Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                                 Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -640,7 +640,7 @@ namespace IBS.DataAccess.Repository.Filpride
                               ?? throw new ArgumentException("Mapped EWT account title not found.")
                             : null;
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -661,7 +661,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                         if (lineHaulingEwtAmount > 0)
                         {
-                            ledgers.Add(new FilprideGeneralLedgerBook
+                            ledgers.Add(new GeneralLedgerBook
                             {
                                 Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                                 Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -693,7 +693,7 @@ namespace IBS.DataAccess.Repository.Filpride
                               ?? throw new ArgumentException("Mapped EWT account title not found.")
                             : null;
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -709,7 +709,7 @@ namespace IBS.DataAccess.Repository.Filpride
                             ModuleType = nameof(ModuleType.Sales)
                         });
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                             Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -730,7 +730,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                         if (commissionEwtAmount > 0)
                         {
-                            ledgers.Add(new FilprideGeneralLedgerBook
+                            ledgers.Add(new GeneralLedgerBook
                             {
                                 Date = (DateOnly)deliveryReceipt.DeliveredDate!,
                                 Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -754,7 +754,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
 
                 #endregion General Ledger Book Recording
 
@@ -768,7 +768,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         private async Task UpdateCosRemainingVolumeAsync(int cosId, decimal drVolume, CancellationToken cancellationToken)
         {
-            var cos = await _db.FilprideCustomerOrderSlips
+            var cos = await _db.CustomerOrderSlips
                 .FirstOrDefaultAsync(po => po.CustomerOrderSlipId == cosId, cancellationToken)
                       ?? throw new InvalidOperationException("No record found.");
 
@@ -787,7 +787,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task DeductTheVolumeToCos(int cosId, decimal drVolume, CancellationToken cancellationToken = default)
         {
-            var cos = await _db.FilprideCustomerOrderSlips
+            var cos = await _db.CustomerOrderSlips
                 .FirstOrDefaultAsync(po => po.CustomerOrderSlipId == cosId, cancellationToken)
                       ?? throw new InvalidOperationException("No record found.");
 
@@ -801,9 +801,9 @@ namespace IBS.DataAccess.Repository.Filpride
             cos.IsDelivered = false;
         }
 
-        public async Task UpdatePreviousAppointedSupplierAsync(FilprideDeliveryReceipt model)
+        public async Task UpdatePreviousAppointedSupplierAsync(DeliveryReceipt model)
         {
-            var previousAppointedSupplier = await _db.FilprideBookAtlDetails
+            var previousAppointedSupplier = await _db.BookAtlDetails
                 .Include(x => x.AppointedSupplier)
                 .FirstOrDefaultAsync(x => x.AuthorityToLoadId == model.AuthorityToLoadId
                                           && x.CustomerOrderSlipId == model.CustomerOrderSlipId
@@ -813,9 +813,9 @@ namespace IBS.DataAccess.Repository.Filpride
             previousAppointedSupplier.UnservedQuantity += model.Quantity;
         }
 
-        public async Task AssignNewPurchaseOrderAsync(FilprideDeliveryReceipt model)
+        public async Task AssignNewPurchaseOrderAsync(DeliveryReceipt model)
         {
-            var newAppointedSupplier = await _db.FilprideBookAtlDetails
+            var newAppointedSupplier = await _db.BookAtlDetails
                 .Include(x => x.AppointedSupplier)
                 .FirstOrDefaultAsync(x => x.AuthorityToLoadId == model.AuthorityToLoadId
                                           && x.CustomerOrderSlipId == model.CustomerOrderSlipId
@@ -848,7 +848,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
             foreach (var dr in inTransits.OrderBy(dr => dr.DeliveryReceiptNo))
             {
-                var ledgers = new List<FilprideGeneralLedgerBook>();
+                var ledgers = new List<GeneralLedgerBook>();
                 var purchaseOrderGroups = dr.Details.Any()
                     ? dr.Details
                         .Where(detail => detail.PurchaseOrder != null)
@@ -856,11 +856,11 @@ namespace IBS.DataAccess.Repository.Filpride
                         .Select(group => (PurchaseOrder: group.First().PurchaseOrder!, Quantity: group.Sum(detail => detail.Quantity)))
                         .ToList()
                     : dr.PurchaseOrder != null
-                        ? new List<(IBS.Models.Filpride.AccountsPayable.FilpridePurchaseOrder PurchaseOrder, decimal Quantity)>
+                        ? new List<(IBS.Models.Filpride.AccountsPayable.PurchaseOrder PurchaseOrder, decimal Quantity)>
                         {
                             (dr.PurchaseOrder, dr.Quantity)
                         }
-                        : new List<(IBS.Models.Filpride.AccountsPayable.FilpridePurchaseOrder PurchaseOrder, decimal Quantity)>();
+                        : new List<(IBS.Models.Filpride.AccountsPayable.PurchaseOrder PurchaseOrder, decimal Quantity)>();
 
                 foreach (var purchaseOrderGroup in purchaseOrderGroups)
                 {
@@ -875,7 +875,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                     #region In-Transit Entries
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(endOfPreviousMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -890,7 +890,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         CreatedDate = DateTimeHelper.GetCurrentPhilippineTime(),
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(endOfPreviousMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -905,7 +905,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         CreatedDate = DateTimeHelper.GetCurrentPhilippineTime(),
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(endOfPreviousMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -923,7 +923,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         SubAccountName = purchaseOrderGroup.PurchaseOrder.SupplierName
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(endOfPreviousMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -942,7 +942,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                     #region Auto Reversal Entries
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(startOfMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -957,7 +957,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         CreatedDate = DateTimeHelper.GetCurrentPhilippineTime(),
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(startOfMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -972,7 +972,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         CreatedDate = DateTimeHelper.GetCurrentPhilippineTime(),
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(startOfMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -990,7 +990,7 @@ namespace IBS.DataAccess.Repository.Filpride
                         SubAccountName = purchaseOrderGroup.PurchaseOrder.SupplierName
                     });
 
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = DateOnly.FromDateTime(startOfMonth),
                         Reference = dr.DeliveryReceiptNo,
@@ -1013,14 +1013,14 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
                 await _db.SaveChangesAsync(cancellationToken);
             }
         }
 
         public async Task<bool> CheckIfManualDrNoExists(string manualDrNo)
         {
-            return await _db.FilprideDeliveryReceipts
+            return await _db.DeliveryReceipts
                 .Where(dr => dr.CanceledBy == null && dr.VoidedBy == null)
                 .AnyAsync(dr => dr.ManualDrNo == manualDrNo);
         }
@@ -1031,7 +1031,7 @@ namespace IBS.DataAccess.Repository.Filpride
             string userName,
             CancellationToken cancellationToken = default)
         {
-            List<FilprideDeliveryReceipt> deliveryReceipts = await dbSet
+            List<DeliveryReceipt> deliveryReceipts = await dbSet
                 .Where(x => x.CustomerOrderSlipId == customerOrderSlipId
                             && x.VoidedBy == null
                             && x.CanceledBy == null)
@@ -1039,7 +1039,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     .ThenInclude(cos => cos!.Product)
                 .ToListAsync(cancellationToken);
 
-            foreach (FilprideDeliveryReceipt deliveryReceipt in deliveryReceipts)
+            foreach (DeliveryReceipt deliveryReceipt in deliveryReceipts)
             {
                 decimal updatedAmount = deliveryReceipt.Quantity * updatedPrice;
                 decimal difference = updatedAmount - deliveryReceipt.TotalAmount;
@@ -1054,7 +1054,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        private static (int? SupplierId, string? SupplierName) ResolveLockedPeriodSupplier(FilprideDeliveryReceipt deliveryReceipt)
+        private static (int? SupplierId, string? SupplierName) ResolveLockedPeriodSupplier(DeliveryReceipt deliveryReceipt)
         {
             var suppliers = deliveryReceipt.Details
                 .Where(detail => detail.PurchaseOrder != null)
@@ -1079,13 +1079,13 @@ namespace IBS.DataAccess.Repository.Filpride
             return (deliveryReceipt.PurchaseOrder?.SupplierId, deliveryReceipt.PurchaseOrder?.SupplierName);
         }
 
-        private async Task CreateEntriesForUpdatingPrice(FilprideDeliveryReceipt deliveryReceipt, decimal difference, string userName, CancellationToken cancellationToken = default)
+        private async Task CreateEntriesForUpdatingPrice(DeliveryReceipt deliveryReceipt, decimal difference, string userName, CancellationToken cancellationToken = default)
         {
             try
             {
                 #region General Ledger Book Recording
 
-                var ledgers = new List<FilprideGeneralLedgerBook>();
+                var ledgers = new List<GeneralLedgerBook>();
                 var (salesAcctNo, salesAcctTitle) = GetSalesAccountTitle(deliveryReceipt.CustomerOrderSlip!.Product!.ProductCode);
                 var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
                 var salesTitle = accountTitlesDto.Find(c => c.AccountNumber == salesAcctNo) ?? throw new ArgumentException($"Account title '{salesAcctNo}' not found.");
@@ -1124,7 +1124,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (arTradeCwtAmount > 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = postingDate,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1143,7 +1143,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (arTradeCwvAmount > 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = postingDate,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1160,7 +1160,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     });
                 }
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1183,7 +1183,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     ModuleType = nameof(ModuleType.Sales)
                 });
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1199,7 +1199,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     ModuleType = nameof(ModuleType.Sales)
                 });
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1220,7 +1220,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
                 await unitOfWork.LockedPeriodAdjustment.AddIfPeriodPostedAsync(new LockedPeriodAdjustmentRequestDto
                 {
                     Module = Module.DeliveryReceipt,
@@ -1250,14 +1250,14 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        public async Task CreateEntriesForUpdatingCommission(FilprideDeliveryReceipt deliveryReceipt,
+        public async Task CreateEntriesForUpdatingCommission(DeliveryReceipt deliveryReceipt,
             decimal difference,
             string userName,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                var ledgers = new List<FilprideGeneralLedgerBook>();
+                var ledgers = new List<GeneralLedgerBook>();
                 var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
                 var (commissionAcctNo, commissionAcctTitle) = GetCommissionAccount(deliveryReceipt.CustomerOrderSlip!.Product!.ProductCode);
                 var commissionTitle = accountTitlesDto.Find(c => c.AccountNumber == commissionAcctNo)
@@ -1292,7 +1292,7 @@ namespace IBS.DataAccess.Repository.Filpride
                       ?? throw new ArgumentException("Mapped EWT account title not found.")
                     : null;
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1308,7 +1308,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     ModuleType = nameof(ModuleType.Sales)
                 });
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1329,7 +1329,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (commissionEwtAmount > 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = postingDate,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1351,7 +1351,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
                 await unitOfWork.LockedPeriodAdjustment.AddIfPeriodPostedAsync(new LockedPeriodAdjustmentRequestDto
                 {
                     Module = Module.DeliveryReceipt,
@@ -1378,14 +1378,14 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        public async Task CreateEntriesForUpdatingFreight(FilprideDeliveryReceipt deliveryReceipt,
+        public async Task CreateEntriesForUpdatingFreight(DeliveryReceipt deliveryReceipt,
             decimal difference,
             string userName,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                var ledgers = new List<FilprideGeneralLedgerBook>();
+                var ledgers = new List<GeneralLedgerBook>();
                 var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
                 var (freightAcctNo, freightAcctTitle) = GetFreightAccount(deliveryReceipt.CustomerOrderSlip!.Product!.ProductCode);
                 var freightTitle = accountTitlesDto.Find(c => c.AccountNumber == freightAcctNo)
@@ -1426,7 +1426,7 @@ namespace IBS.DataAccess.Repository.Filpride
                       ?? throw new ArgumentException("Mapped EWT account title not found.")
                     : null;
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1446,7 +1446,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     ? ComputeVatAmount(freightNetOfVat)
                     : 0m;
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1462,7 +1462,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     ModuleType = nameof(ModuleType.Sales)
                 });
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = postingDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1483,7 +1483,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (freightEwtAmount > 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = postingDate,
                         Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -1505,7 +1505,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
                 await unitOfWork.LockedPeriodAdjustment.AddIfPeriodPostedAsync(new LockedPeriodAdjustmentRequestDto
                 {
                     Module = Module.DeliveryReceipt,
@@ -1534,3 +1534,4 @@ namespace IBS.DataAccess.Repository.Filpride
 
     }
 }
+

@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class CreditMemoRepository : Repository<FilprideCreditMemo>, ICreditMemoRepository
+    public class CreditMemoRepository : Repository<CreditMemo>, ICreditMemoRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -32,7 +32,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCm = await _db
-                .FilprideCreditMemos
+                .CreditMemos
                 .AsNoTracking()
                 .OrderByDescending(x => x.CreditMemoNo!.Length)
                 .ThenByDescending(x => x.CreditMemoNo)
@@ -56,7 +56,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCm = await _db
-                .FilprideCreditMemos
+                .CreditMemos
                 .AsNoTracking()
                 .OrderByDescending(x => x.CreditMemoNo)
                 .FirstOrDefaultAsync(x =>
@@ -76,7 +76,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D9");
         }
 
-        public async Task PostAsync(FilprideCreditMemo model, CancellationToken cancellationToken = default)
+        public async Task PostAsync(CreditMemo model, CancellationToken cancellationToken = default)
         {
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
             var arTradeReceivableTitle = accountTitlesDto.Find(c => c.AccountNumber == "101020100") ?? throw new ArgumentException("Account title '101020100' not found.");
@@ -123,7 +123,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     withHoldingVatAmount = ComputeEwtAmount(Math.Abs(netOfVatAmount), 0.05m) * -1m;
                 }
 
-                var ledgers = new List<FilprideGeneralLedgerBook>
+                var ledgers = new List<GeneralLedgerBook>
                 {
                     new()
                     {
@@ -147,7 +147,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (withHoldingTaxAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -166,7 +166,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (withHoldingVatAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -183,7 +183,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     });
                 }
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = model.TransactionDate,
                     Reference = model.CreditMemoNo!,
@@ -201,7 +201,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (vatAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -223,7 +223,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             }
 
             if (model.ServiceInvoiceId != null)
@@ -279,7 +279,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     withHoldingVatAmount = ComputeEwtAmount(Math.Abs(netOfVatAmount), 0.05m) * -1m;
                 }
 
-                var ledgers = new List<FilprideGeneralLedgerBook>
+                var ledgers = new List<GeneralLedgerBook>
                 {
                     new()
                     {
@@ -303,7 +303,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (withHoldingTaxAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -322,7 +322,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (withHoldingVatAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -339,7 +339,7 @@ namespace IBS.DataAccess.Repository.Filpride
                     });
                 }
 
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = model.TransactionDate,
                     Reference = model.CreditMemoNo!,
@@ -357,7 +357,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
                 if (vatAmount < 0)
                 {
-                    ledgers.Add(new FilprideGeneralLedgerBook
+                    ledgers.Add(new GeneralLedgerBook
                     {
                         Date = model.TransactionDate,
                         Reference = model.CreditMemoNo!,
@@ -379,13 +379,13 @@ namespace IBS.DataAccess.Repository.Filpride
                     throw new ArgumentException("Debit and Credit is not equal, check your entries.");
                 }
 
-                await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             }
 
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public override async Task<FilprideCreditMemo?> GetAsync(Expression<Func<FilprideCreditMemo, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<CreditMemo?> GetAsync(Expression<Func<CreditMemo, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(c => c.SalesInvoice)
@@ -404,9 +404,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override async Task<IEnumerable<FilprideCreditMemo>> GetAllAsync(Expression<Func<FilprideCreditMemo, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<CreditMemo>> GetAllAsync(Expression<Func<CreditMemo, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideCreditMemo> query = dbSet
+            IQueryable<CreditMemo> query = dbSet
                 .Include(c => c.SalesInvoice)
                 .ThenInclude(s => s!.Product)
                 .Include(c => c.SalesInvoice)
@@ -429,9 +429,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideCreditMemo> GetAllQuery(Expression<Func<FilprideCreditMemo, bool>>? filter = null)
+        public override IQueryable<CreditMemo> GetAllQuery(Expression<Func<CreditMemo, bool>>? filter = null)
         {
-            IQueryable<FilprideCreditMemo> query = dbSet
+            IQueryable<CreditMemo> query = dbSet
                 .Include(c => c.SalesInvoice)
                 .ThenInclude(s => s!.Product)
                 .Include(c => c.SalesInvoice)
@@ -454,3 +454,4 @@ namespace IBS.DataAccess.Repository.Filpride
         }
     }
 }
+

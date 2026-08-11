@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Bienes
 {
-    public class PlacementRepository : Repository<BienesPlacement>, IPlacementRepository
+    public class PlacementRepository : Repository<Placement>, IPlacementRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -24,7 +24,7 @@ namespace IBS.DataAccess.Repository.Bienes
             var company = await _db.Companies.FirstOrDefaultAsync(x => x.CompanyId == companyId, cancellationToken)
                           ?? throw new NullReferenceException("Company not found.");
 
-            var lastRecord = await _db.BienesPlacements
+            var lastRecord = await _db.Placements
                 .Where(p => p.CompanyId == companyId)
                 .OrderByDescending(p => p.ControlNumber.Length)
                 .ThenByDescending(p => p.ControlNumber)
@@ -44,7 +44,7 @@ namespace IBS.DataAccess.Repository.Bienes
 
         public async Task UpdateAsync(PlacementViewModel viewModel, CancellationToken cancellationToken = default)
         {
-            var existingRecord = await _db.BienesPlacements
+            var existingRecord = await _db.Placements
                 .FirstOrDefaultAsync(p => p.PlacementId == viewModel.PlacementId, cancellationToken);
 
             existingRecord!.CompanyId = viewModel.CompanyId;
@@ -81,8 +81,8 @@ namespace IBS.DataAccess.Repository.Bienes
                 existingRecord.EditedBy = viewModel.CurrentUser;
                 existingRecord.EditedDate = DateTimeHelper.GetCurrentPhilippineTime();
 
-                FilprideAuditTrail auditTrailBook = new(existingRecord.EditedBy, $"Edit placement# {existingRecord.ControlNumber}", "Placement", nameof(Bienes));
-                await _db.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingRecord.EditedBy, $"Edit placement# {existingRecord.ControlNumber}", "Placement", nameof(Bienes));
+                await _db.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -92,9 +92,9 @@ namespace IBS.DataAccess.Repository.Bienes
             }
         }
 
-        public async Task RollOverAsync(BienesPlacement model, string user, CancellationToken cancellationToken = default)
+        public async Task RollOverAsync(Placement model, string user, CancellationToken cancellationToken = default)
         {
-            BienesPlacement newPlacement = new()
+            Placement newPlacement = new()
             {
                 ControlNumber = model.ControlNumber,
                 CompanyId = model.CompanyId,
@@ -124,13 +124,13 @@ namespace IBS.DataAccess.Repository.Bienes
                 RolledFromId = model.PlacementId,
             };
 
-            await _db.BienesPlacements.AddAsync(newPlacement, cancellationToken);
+            await _db.Placements.AddAsync(newPlacement, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<string> SwappingAsync(BienesPlacement model, int companyId, string user, CancellationToken cancellationToken = default)
+        public async Task<string> SwappingAsync(Placement model, int companyId, string user, CancellationToken cancellationToken = default)
         {
-            BienesPlacement newPlacement = new()
+            Placement newPlacement = new()
             {
                 ControlNumber = await GenerateControlNumberAsync(companyId, cancellationToken),
                 CompanyId = model.CompanyId,
@@ -160,13 +160,13 @@ namespace IBS.DataAccess.Repository.Bienes
                 SwappedFromId = model.PlacementId,
             };
 
-            await _db.BienesPlacements.AddAsync(newPlacement, cancellationToken);
+            await _db.Placements.AddAsync(newPlacement, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             return newPlacement.ControlNumber;
         }
 
-        public override async Task<BienesPlacement?> GetAsync(Expression<Func<BienesPlacement, bool>> filter,
+        public override async Task<Placement?> GetAsync(Expression<Func<Placement, bool>> filter,
             CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
@@ -176,9 +176,9 @@ namespace IBS.DataAccess.Repository.Bienes
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override async Task<IEnumerable<BienesPlacement>> GetAllAsync(Expression<Func<BienesPlacement, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<Placement>> GetAllAsync(Expression<Func<Placement, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<BienesPlacement> query = dbSet
+            IQueryable<Placement> query = dbSet
                 .Include(p => p.Company)
                 .Include(p => p.BankAccount);
 
@@ -191,3 +191,4 @@ namespace IBS.DataAccess.Repository.Bienes
         }
     }
 }
+

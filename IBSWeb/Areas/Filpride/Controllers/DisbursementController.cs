@@ -196,8 +196,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 ? $"Update DCP date of CV# {cv.CheckVoucherHeaderNo}"
                 : $"Update DCP date of CV# {cv.CheckVoucherHeaderNo} and {connectedInvoices.Count} connected invoice(s)";
 
-            FilprideAuditTrail auditTrailBook = new(GetUserFullName(), auditMessage, "Disbursement", cv.Company);
-            await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+            AuditTrail auditTrailBook = new(GetUserFullName(), auditMessage, "Disbursement", cv.Company);
+            await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
             await _unitOfWork.SaveAsync(cancellationToken);
 
@@ -253,26 +253,27 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 ? $"Update DCR date of CV# {cv.CheckVoucherHeaderNo}"
                 : $"Update DCR date of CV# {cv.CheckVoucherHeaderNo} and {connectedInvoices.Count} connected invoice(s)";
 
-            FilprideAuditTrail auditTrailBook = new(GetUserFullName(), auditMessage, "Disbursement", cv.Company);
-            await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+            AuditTrail auditTrailBook = new(GetUserFullName(), auditMessage, "Disbursement", cv.Company);
+            await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
             await _unitOfWork.SaveAsync(cancellationToken);
 
             return Json(new { success = true });
         }
 
-        private async Task<List<FilprideCheckVoucherHeader>> GetConnectedInvoicesAsync(
+        private async Task<List<CheckVoucherHeader>> GetConnectedInvoicesAsync(
             int paymentCvId,
             string company,
             CancellationToken cancellationToken)
         {
-            return await _dbContext.FilprideCheckVoucherHeaders
+            return await _dbContext.CheckVoucherHeaders
                 .Where(invoice => invoice.Company == company &&
                                   invoice.PostedBy != null &&
-                                  _dbContext.FilprideMultipleCheckVoucherPayments
+                                  _dbContext.MultipleCheckVoucherPayments
                                       .Any(payment => payment.CheckVoucherHeaderPaymentId == paymentCvId &&
                                                       payment.CheckVoucherHeaderInvoiceId == invoice.CheckVoucherHeaderId))
                 .ToListAsync(cancellationToken);
         }
     }
 }
+

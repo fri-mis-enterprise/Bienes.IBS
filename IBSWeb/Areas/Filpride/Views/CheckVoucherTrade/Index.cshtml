@@ -1,4 +1,4 @@
-﻿@model IEnumerable<FilprideCheckVoucherHeader>
+@model IEnumerable<CheckVoucherHeader>
 @using IBS.Models.Enums
 @using IBS.Utility.Constants
 @{
@@ -157,7 +157,7 @@
                     return $.extend({}, d, {
                         __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
 
-                        // NEW PARAMETER FOR DATE — this goes to controller
+                        // NEW PARAMETER FOR DATE � this goes to controller
                         filterDate: filterValue
                     });
                 },

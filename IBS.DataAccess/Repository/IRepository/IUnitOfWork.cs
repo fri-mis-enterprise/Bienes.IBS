@@ -30,14 +30,14 @@ namespace IBS.DataAccess.Repository.IRepository
 
         #region--Filpride
 
-        Filpride.IRepository.IChartOfAccountRepository FilprideChartOfAccount { get; }
-        Filpride.IRepository.ICustomerOrderSlipRepository FilprideCustomerOrderSlip { get; }
-        IDeliveryReceiptRepository FilprideDeliveryReceipt { get; }
-        Filpride.IRepository.ISupplierRepository FilprideSupplier { get; }
-        Filpride.IRepository.ICustomerRepository FilprideCustomer { get; }
-        IAuditTrailRepository FilprideAuditTrail { get; }
-        ICustomerBranchRepository FilprideCustomerBranch { get; }
-        ITermsRepository FilprideTerms { get; }
+        Filpride.IRepository.IChartOfAccountRepository ChartOfAccount { get; }
+        Filpride.IRepository.ICustomerOrderSlipRepository CustomerOrderSlip { get; }
+        IDeliveryReceiptRepository DeliveryReceipt { get; }
+        Filpride.IRepository.ISupplierRepository Supplier { get; }
+        Filpride.IRepository.ICustomerRepository Customer { get; }
+        IAuditTrailRepository AuditTrail { get; }
+        ICustomerBranchRepository CustomerBranch { get; }
+        ITermsRepository Terms { get; }
         Filpride.IRepository.IGeneralLedgerRepository GeneralLedger { get; }
         IProvisionalReceiptRepository ProvisionalReceipt { get; }
         ILockedPeriodAdjustmentRepository LockedPeriodAdjustment { get; }
@@ -68,15 +68,15 @@ namespace IBS.DataAccess.Repository.IRepository
         #region AAS
 
         #region Accounts Receivable
-        ISalesInvoiceRepository FilprideSalesInvoice { get; }
+        ISalesInvoiceRepository SalesInvoice { get; }
 
-        Filpride.IRepository.IServiceInvoiceRepository FilprideServiceInvoice { get; }
+        Filpride.IRepository.IServiceInvoiceRepository ServiceInvoice { get; }
 
-        Filpride.IRepository.ICollectionReceiptRepository FilprideCollectionReceipt { get; }
+        Filpride.IRepository.ICollectionReceiptRepository CollectionReceipt { get; }
 
-        Filpride.IRepository.IDebitMemoRepository FilprideDebitMemo { get; }
+        Filpride.IRepository.IDebitMemoRepository DebitMemo { get; }
 
-        Filpride.IRepository.ICreditMemoRepository FilprideCreditMemo { get; }
+        Filpride.IRepository.ICreditMemoRepository CreditMemo { get; }
         #endregion
 
         #region Accounts Payable
@@ -85,29 +85,29 @@ namespace IBS.DataAccess.Repository.IRepository
 
         Filpride.IRepository.IJournalVoucherRepository FilprideJournalVoucher { get; }
 
-        Filpride.IRepository.IPurchaseOrderRepository FilpridePurchaseOrder { get; }
+        Filpride.IRepository.IPurchaseOrderRepository PurchaseOrder { get; }
 
-        Filpride.IRepository.IReceivingReportRepository FilprideReceivingReport { get; }
+        Filpride.IRepository.IReceivingReportRepository ReceivingReport { get; }
 
         #endregion
 
         #region Books and Report
-        Filpride.IRepository.IInventoryRepository FilprideInventory { get; }
+        Filpride.IRepository.IInventoryRepository Inventory { get; }
 
         IReportRepository FilprideReport { get; }
         #endregion
 
         #region Master File
 
-        Filpride.IRepository.IBankAccountRepository FilprideBankAccount { get; }
+        Filpride.IRepository.IBankAccountRepository BankAccount { get; }
 
-        Filpride.IRepository.IServiceRepository FilprideService { get; }
+        Filpride.IRepository.IServiceRepository Service { get; }
 
-        Filpride.IRepository.IPickUpPointRepository FilpridePickUpPoint { get; }
+        Filpride.IRepository.IPickUpPointRepository PickUpPoint { get; }
 
-        IFreightRepository FilprideFreight { get; }
+        IFreightRepository Freight { get; }
 
-        IAuthorityToLoadRepository FilprideAuthorityToLoad { get; }
+        IAuthorityToLoadRepository AuthorityToLoad { get; }
 
         #endregion
 
@@ -115,7 +115,7 @@ namespace IBS.DataAccess.Repository.IRepository
 
         #region --Bienes
 
-        IPlacementRepository BienesPlacement { get; }
+        IPlacementRepository Placement { get; }
 
         #endregion
 
@@ -128,3 +128,4 @@ namespace IBS.DataAccess.Repository.IRepository
         Task<bool> IsPeriodPostedAsync(Module module, DateOnly date, CancellationToken cancellationToken = default);
     }
 }
+

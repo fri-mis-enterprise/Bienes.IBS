@@ -54,7 +54,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         public async Task<IActionResult> Index(string? view, CancellationToken cancellationToken)
         {
-            IEnumerable<FilprideCustomer> customer = await _unitOfWork.FilprideCustomer
+            IEnumerable<Customer> customer = await _unitOfWork.Customer
                 .GetAllAsync(null, cancellationToken);
 
             if (view == nameof(DynamicView.Customer))
@@ -73,10 +73,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 return BadRequest();
             }
-            var model = new FilprideCustomer()
+            var model = new Customer()
             {
 
-                PaymentTerms = await _unitOfWork.FilprideTerms
+                PaymentTerms = await _unitOfWork.Terms
                     .GetFilprideTermsListAsyncByCode(cancellationToken),
                 Commissionees = await _unitOfWork.GetFilprideCommissioneeListAsyncById(companyClaims, cancellationToken),
             };
@@ -85,7 +85,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FilprideCustomer model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(Customer model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -100,10 +100,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return BadRequest();
             }
 
-            model.PaymentTerms = await _unitOfWork.FilprideTerms
+            model.PaymentTerms = await _unitOfWork.Terms
                 .GetFilprideTermsListAsyncByCode(cancellationToken);
 
-            var isTinExist = await _unitOfWork.FilprideCustomer.IsTinNoExistAsync(model.CustomerTin, companyClaims, cancellationToken);
+            var isTinExist = await _unitOfWork.Customer.IsTinNoExistAsync(model.CustomerTin, companyClaims, cancellationToken);
 
             if (isTinExist)
             {
@@ -116,16 +116,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
             try
             {
                 model.Company = companyClaims;
-                model.CustomerCode = await _unitOfWork.FilprideCustomer.GenerateCodeAsync(model.CustomerType, cancellationToken);
+                model.CustomerCode = await _unitOfWork.Customer.GenerateCodeAsync(model.CustomerType, cancellationToken);
                 model.CreatedBy = GetUserFullName();
-                await _unitOfWork.FilprideCustomer.AddAsync(model, cancellationToken);
+                await _unitOfWork.Customer.AddAsync(model, cancellationToken);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
                 #region -- Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(model.CreatedBy!,
+                AuditTrail auditTrailBook = new(model.CreatedBy!,
                     $"Created new Customer #{model.CustomerCode}", "Customer", model.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recording --
 
@@ -150,7 +150,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var customer = await _unitOfWork.FilprideCustomer.GetAsync(c => c.CustomerId == id, cancellationToken);
+            var customer = await _unitOfWork.Customer.GetAsync(c => c.CustomerId == id, cancellationToken);
             var companyClaims = await GetCompanyClaimAsync();
             if (companyClaims == null)
             {
@@ -159,7 +159,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (customer != null)
             {
-                customer.PaymentTerms = await _unitOfWork.FilprideTerms
+                customer.PaymentTerms = await _unitOfWork.Terms
                     .GetFilprideTermsListAsyncByCode(cancellationToken);
                 customer.Commissionees = await _unitOfWork.GetFilprideCommissioneeListAsyncById(companyClaims, cancellationToken);
                 return View(customer);
@@ -170,14 +170,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(FilprideCustomer model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(Customer model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            model.PaymentTerms = await _unitOfWork.FilprideTerms
+            model.PaymentTerms = await _unitOfWork.Terms
                 .GetFilprideTermsListAsyncByCode(cancellationToken);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -185,13 +185,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
             try
             {
                 model.EditedBy = GetUserFullName();
-                await _unitOfWork.FilprideCustomer.UpdateAsync(model, cancellationToken);
+                await _unitOfWork.Customer.UpdateAsync(model, cancellationToken);
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (model.EditedBy,
+                AuditTrail auditTrailBook = new (model.EditedBy,
                     $"Edited Customer #{model.CustomerCode}", "Customer", model.Company );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -213,7 +213,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var query = _unitOfWork.FilprideCustomer
+                var query = _unitOfWork.Customer
                     .GetAllQuery();
 
                 var totalRecords = await query.CountAsync(cancellationToken);
@@ -273,7 +273,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var customer = await _unitOfWork
-                .FilprideCustomer
+                .Customer
                 .GetAsync(c => c.CustomerId == id, cancellationToken);
 
             if (customer == null)
@@ -281,7 +281,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            customer.PaymentTerms = await _unitOfWork.FilprideTerms
+            customer.PaymentTerms = await _unitOfWork.Terms
                 .GetFilprideTermsListAsyncByCode(cancellationToken);
 
             return View(customer);
@@ -296,7 +296,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var customer = await _unitOfWork
-                .FilprideCustomer
+                .Customer
                 .GetAsync(c => c.CustomerId == id, cancellationToken);
 
             if (customer == null)
@@ -304,7 +304,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            customer.PaymentTerms = await _unitOfWork.FilprideTerms
+            customer.PaymentTerms = await _unitOfWork.Terms
                 .GetFilprideTermsListAsyncByCode(cancellationToken);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -317,10 +317,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 #region --Audit Trail Recording
 
                 var user = GetUserFullName();
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     user!, $"Activated Customer #{customer.CustomerCode}",
                     "Customer", customer.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -346,12 +346,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var customer = await _unitOfWork
-                .FilprideCustomer
+                .Customer
                 .GetAsync(c => c.CustomerId == id, cancellationToken);
 
             if (customer != null)
             {
-                customer.PaymentTerms = await _unitOfWork.FilprideTerms
+                customer.PaymentTerms = await _unitOfWork.Terms
                     .GetFilprideTermsListAsyncByCode(cancellationToken);
 
                 return View(customer);
@@ -369,7 +369,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var customer = await _unitOfWork
-                .FilprideCustomer
+                .Customer
                 .GetAsync(c => c.CustomerId == id, cancellationToken);
 
             if (customer == null)
@@ -377,7 +377,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            customer.PaymentTerms = await _unitOfWork.FilprideTerms
+            customer.PaymentTerms = await _unitOfWork.Terms
                 .GetFilprideTermsListAsyncByCode(cancellationToken);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -389,9 +389,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail Recording --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(),
+                AuditTrail auditTrailBook = new(GetUserFullName(),
                     $"Deactivated Customer #{customer.CustomerCode}", "Customer", customer.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recording --
 
@@ -424,7 +424,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var recordIds = selectedRecord.Split(',').Select(int.Parse).ToList();
 
             // Retrieve the selected invoices from the database
-            var selectedList = await _unitOfWork.FilprideCustomer
+            var selectedList = await _unitOfWork.Customer
                 .GetAllAsync(c => recordIds.Contains(c.CustomerId));
 
             // Create the Excel package
@@ -482,7 +482,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public IActionResult GetAllCustomerIds()
         {
-            var customerIds = _dbContext.FilprideCustomers
+            var customerIds = _dbContext.Customers
                 .Select(c => c.CustomerId)
                 .ToList();
 
@@ -499,7 +499,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var customers = await _unitOfWork.FilprideCustomer
+                var customers = await _unitOfWork.Customer
                     .GetAllAsync(null, cancellationToken);
 
                 // Apply date range filter if provided (using CreatedDate)
@@ -570,7 +570,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalRecords = customers.Count();
 
                 // Apply pagination - HANDLE -1 FOR "ALL"
-                IEnumerable<FilprideCustomer> pagedCustomers;
+                IEnumerable<Customer> pagedCustomers;
 
                 if (parameters.Length == -1)
                 {
@@ -617,3 +617,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

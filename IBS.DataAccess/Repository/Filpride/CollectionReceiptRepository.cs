@@ -14,7 +14,7 @@ using IBS.Models.Filpride.MasterFile;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class CollectionReceiptRepository : Repository<FilprideCollectionReceipt>, ICollectionReceiptRepository
+    public class CollectionReceiptRepository : Repository<CollectionReceipt>, ICollectionReceiptRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -36,7 +36,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCr = await _db
-                .FilprideCollectionReceipts
+                .CollectionReceipts
                 .AsNoTracking()
                 .OrderByDescending(x => x.CollectionReceiptNo!.Length)
                 .ThenByDescending(x => x.CollectionReceiptNo)
@@ -60,7 +60,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastCr = await _db
-                .FilprideCollectionReceipts
+                .CollectionReceipts
                 .AsNoTracking()
                 .OrderByDescending(x => x.CollectionReceiptNo!.Length)
                 .ThenByDescending(x => x.CollectionReceiptNo)
@@ -81,19 +81,19 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D9");
         }
 
-        public async Task<List<FilprideOffsettings>> GetOffsettings(string source, string reference, string company, CancellationToken cancellationToken = default)
+        public async Task<List<Offsettings>> GetOffsettings(string source, string reference, string company, CancellationToken cancellationToken = default)
         {
             var result = await _db
-                .FilprideOffsettings
+                .Offsettings
                 .Where(o => o.Company == company && o.Source == source && o.Reference == reference)
                 .ToListAsync(cancellationToken);
 
             return result;
         }
 
-        public async Task PostAsync(FilprideCollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
+        public async Task PostAsync(CollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
         {
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
             var cashInBankTitle = accountTitlesDto.Find(c => c.AccountNumber == "101010100") ?? throw new ArgumentException("Account title '101010100' not found.");
             var arTradeTitle = accountTitlesDto.Find(c => c.AccountNumber == "101020100") ?? throw new ArgumentException("Account title '101020100' not found.");
@@ -102,7 +102,7 @@ namespace IBS.DataAccess.Repository.Filpride
             var cwt = accountTitlesDto.Find(c => c.AccountNumber == "101060400") ?? throw new ArgumentException("Account title '101060400' not found.");
             var cwv = accountTitlesDto.Find(c => c.AccountNumber == "101060600") ?? throw new ArgumentException("Account title '101060600' not found.");
 
-            collectionReceipt.ReceiptDetails = await _db.FilprideCollectionReceiptDetails
+            collectionReceipt.ReceiptDetails = await _db.CollectionReceiptDetails
                 .Where(rd => rd.CollectionReceiptId == collectionReceipt.CollectionReceiptId)
                 .ToListAsync(cancellationToken);
 
@@ -116,7 +116,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -137,7 +137,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -158,7 +158,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -179,7 +179,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -203,7 +203,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -224,7 +224,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -242,14 +242,14 @@ namespace IBS.DataAccess.Repository.Filpride
                 );
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
 
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DepositAsync(FilprideCollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
+        public async Task DepositAsync(CollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
         {
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
             var cashInBankTitle = accountTitlesDto.Find(c => c.AccountNumber == "101010100")
                                   ?? throw new ArgumentException("Account title '101010100' not found.");
@@ -285,7 +285,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
 
             ledgers.Add(
-                new FilprideGeneralLedgerBook
+                new GeneralLedgerBook
                 {
                     Date = collectionReceipt.TransactionDate,
                     Reference = collectionReceipt.CollectionReceiptNo!,
@@ -308,7 +308,7 @@ namespace IBS.DataAccess.Repository.Filpride
             );
 
             ledgers.Add(
-                new FilprideGeneralLedgerBook
+                new GeneralLedgerBook
                 {
                     Date = collectionReceipt.TransactionDate,
                     Reference = collectionReceipt.CollectionReceiptNo!,
@@ -325,14 +325,14 @@ namespace IBS.DataAccess.Repository.Filpride
                 }
             );
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task RemoveSIPayment(int id, decimal paidAmount, decimal offsetAmount, CancellationToken cancellationToken = default)
         {
             var si = await _db
-                .FilprideSalesInvoices
+                .SalesInvoices
                 .FirstOrDefaultAsync(si => si.SalesInvoiceId == id, cancellationToken);
 
             if (si != null)
@@ -354,7 +354,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task RemoveSVPayment(int id, decimal paidAmount, decimal offsetAmount, CancellationToken cancellationToken = default)
         {
             var sv = await _db
-                .FilprideServiceInvoices
+                .ServiceInvoices
                 .FirstOrDefaultAsync(si => si.ServiceInvoiceId == id, cancellationToken);
 
             if (sv != null)
@@ -376,7 +376,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task RemoveMultipleSIPayment(int[] id, decimal[] paidAmount, decimal offsetAmount, CancellationToken cancellationToken = default)
         {
             var salesInvoices = await _db
-                .FilprideSalesInvoices
+                .SalesInvoices
                 .Where(si => id.Contains(si.SalesInvoiceId))
                 .ToListAsync(cancellationToken);
 
@@ -402,7 +402,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task UpdateInvoice(int id, decimal paidAmount, CancellationToken cancellationToken = default)
         {
             var si = await _db
-                .FilprideSalesInvoices
+                .SalesInvoices
                 .FirstOrDefaultAsync(si => si.SalesInvoiceId == id, cancellationToken);
 
             if (si != null)
@@ -427,10 +427,10 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        public async Task UndoSalesInvoiceChanges(FilprideCollectionReceiptDetail collectionReceiptDetail, CancellationToken cancellationToken)
+        public async Task UndoSalesInvoiceChanges(CollectionReceiptDetail collectionReceiptDetail, CancellationToken cancellationToken)
         {
             var si = await _db
-                .FilprideSalesInvoices
+                .SalesInvoices
                 .FirstOrDefaultAsync(si => si.SalesInvoiceNo == collectionReceiptDetail.InvoiceNo, cancellationToken);
 
             if (si == null)
@@ -451,10 +451,10 @@ namespace IBS.DataAccess.Repository.Filpride
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UndoServiceInvoiceChanges(FilprideCollectionReceiptDetail collectionReceiptDetail, CancellationToken cancellationToken)
+        public async Task UndoServiceInvoiceChanges(CollectionReceiptDetail collectionReceiptDetail, CancellationToken cancellationToken)
         {
             var sv = await _db
-                .FilprideServiceInvoices
+                .ServiceInvoices
                 .FirstOrDefaultAsync(si => si.ServiceInvoiceNo == collectionReceiptDetail.InvoiceNo, cancellationToken);
 
             if (sv == null)
@@ -480,7 +480,7 @@ namespace IBS.DataAccess.Repository.Filpride
             for (var i = 0; i < siNo.Length; i++)
             {
                 var siValue = siNo[i];
-                var salesInvoice = await _db.FilprideSalesInvoices
+                var salesInvoice = await _db.SalesInvoices
                     .FirstOrDefaultAsync(p => p.SalesInvoiceNo == siValue, cancellationToken)
                                    ?? throw new NullReferenceException("SalesInvoice not found");
 
@@ -511,7 +511,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task UpdateSV(int id, decimal paidAmount, decimal offsetAmount, CancellationToken cancellationToken = default)
         {
             var sv = await _db
-                .FilprideServiceInvoices
+                .ServiceInvoices
                 .FirstOrDefaultAsync(si => si.ServiceInvoiceId == id, cancellationToken);
 
             if (sv != null)
@@ -537,9 +537,9 @@ namespace IBS.DataAccess.Repository.Filpride
             }
         }
 
-        public override async Task<IEnumerable<FilprideCollectionReceipt>> GetAllAsync(Expression<Func<FilprideCollectionReceipt, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<CollectionReceipt>> GetAllAsync(Expression<Func<CollectionReceipt, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideCollectionReceipt> query = dbSet
+            IQueryable<CollectionReceipt> query = dbSet
                 .Include(cr => cr.Customer)
                 .Include(cr => cr.SalesInvoice)
                 .ThenInclude(s => s!.Customer)
@@ -562,7 +562,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override async Task<FilprideCollectionReceipt?> GetAsync(Expression<Func<FilprideCollectionReceipt, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<CollectionReceipt?> GetAsync(Expression<Func<CollectionReceipt, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(cr => cr.Customer)
@@ -581,9 +581,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideCollectionReceipt> GetAllQuery(Expression<Func<FilprideCollectionReceipt, bool>>? filter = null)
+        public override IQueryable<CollectionReceipt> GetAllQuery(Expression<Func<CollectionReceipt, bool>>? filter = null)
         {
-            IQueryable<FilprideCollectionReceipt> query = dbSet
+            IQueryable<CollectionReceipt> query = dbSet
                 .Include(cr => cr.Customer)
                 .Include(cr => cr.SalesInvoice)
                 .ThenInclude(s => s!.Customer)
@@ -610,16 +610,16 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task ReturnedCheck(string crNo, string company, string userName, CancellationToken cancellationToken = default)
         {
-            var originalEntries = await _db.FilprideGeneralLedgerBooks
+            var originalEntries = await _db.GeneralLedgerBooks
                 .Where(x => x.Reference == crNo
                             && x.Company == company)
                 .ToListAsync(cancellationToken);
 
-            var reversalEntries = new List<FilprideGeneralLedgerBook>();
+            var reversalEntries = new List<GeneralLedgerBook>();
 
             foreach (var originalEntry in originalEntries)
             {
-                var reversalEntry = new FilprideGeneralLedgerBook
+                var reversalEntry = new GeneralLedgerBook
                 {
                     Date = DateOnly.FromDateTime(DateTimeHelper.GetCurrentPhilippineTime()),
                     Reference = originalEntry.Reference,
@@ -642,13 +642,13 @@ namespace IBS.DataAccess.Repository.Filpride
                 reversalEntries.Add(reversalEntry);
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(reversalEntries, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(reversalEntries, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task RedepositAsync(FilprideCollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
+        public async Task RedepositAsync(CollectionReceipt collectionReceipt, CancellationToken cancellationToken = default)
         {
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
             var cashInBankTitle = accountTitlesDto.Find(c => c.AccountNumber == "101010100") ?? throw new ArgumentException("Account title '101010100' not found.");
             var arTradeTitle = accountTitlesDto.Find(c => c.AccountNumber == "101020100") ?? throw new ArgumentException("Account title '101020100' not found.");
@@ -658,7 +658,7 @@ namespace IBS.DataAccess.Repository.Filpride
             var cwv = accountTitlesDto.Find(c => c.AccountNumber == "101060600") ?? throw new ArgumentException("Account title '101060600' not found.");
             string description = "";
 
-            collectionReceipt.ReceiptDetails = await _db.FilprideCollectionReceiptDetails
+            collectionReceipt.ReceiptDetails = await _db.CollectionReceiptDetails
                 .Where(rd => rd.CollectionReceiptId == collectionReceipt.CollectionReceiptId)
                 .ToListAsync(cancellationToken);
 
@@ -694,7 +694,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -720,7 +720,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -741,7 +741,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -762,7 +762,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -786,7 +786,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -807,7 +807,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -825,11 +825,11 @@ namespace IBS.DataAccess.Repository.Filpride
                 );
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task ApplyCostOfMoney(FilprideDeliveryReceipt deliveryReceipt, decimal costOfMoney,
+        public async Task ApplyCostOfMoney(DeliveryReceipt deliveryReceipt, decimal costOfMoney,
             string currentUser, DateOnly depositedDate, CancellationToken cancellationToken = default)
         {
             deliveryReceipt.CommissionAmount -= costOfMoney;
@@ -855,7 +855,7 @@ namespace IBS.DataAccess.Repository.Filpride
                   ?? throw new ArgumentException("Mapped EWT account title not found.")
                 : null;
 
-            var ledgers = new List<FilprideGeneralLedgerBook>
+            var ledgers = new List<GeneralLedgerBook>
             {
                 new()
                 {
@@ -879,7 +879,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
             if (ewtAmount > 0)
             {
-                ledgers.Add(new FilprideGeneralLedgerBook
+                ledgers.Add(new GeneralLedgerBook
                 {
                     Date = depositedDate,
                     Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -896,7 +896,7 @@ namespace IBS.DataAccess.Repository.Filpride
                 });
             }
 
-            ledgers.Add(new FilprideGeneralLedgerBook
+            ledgers.Add(new GeneralLedgerBook
             {
                 Date = depositedDate,
                 Reference = deliveryReceipt.DeliveryReceiptNo,
@@ -917,13 +917,13 @@ namespace IBS.DataAccess.Repository.Filpride
                 throw new ArgumentException("Debit and Credit is not equal, check your entries.");
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task BatchPostCollectionAsync(FilprideCollectionReceipt collectionReceipt, List<AccountTitleDto> accountTitlesDto, CancellationToken cancellationToken = default)
+        public async Task BatchPostCollectionAsync(CollectionReceipt collectionReceipt, List<AccountTitleDto> accountTitlesDto, CancellationToken cancellationToken = default)
         {
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             var cashInBankTitle = accountTitlesDto.Find(c => c.AccountNumber == "101010100") ?? throw new ArgumentException("Account title '101010100' not found.");
             var arTradeTitle = accountTitlesDto.Find(c => c.AccountNumber == "101020100") ?? throw new ArgumentException("Account title '101020100' not found.");
             var arTradeCwt = accountTitlesDto.Find(c => c.AccountNumber == "101020200") ?? throw new ArgumentException("Account title '101020200' not found.");
@@ -940,7 +940,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -966,7 +966,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -987,7 +987,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1008,7 +1008,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.CashAmount > 0 || collectionReceipt.CheckAmount > 0 || collectionReceipt.ManagersCheckAmount > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1032,7 +1032,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.EWT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1053,7 +1053,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (collectionReceipt.WVAT > 0)
             {
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = collectionReceipt.TransactionDate,
                         Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1071,13 +1071,13 @@ namespace IBS.DataAccess.Repository.Filpride
                 );
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
 
         }
 
-        public async Task BatchDepositAsync(FilprideCollectionReceipt collectionReceipt, Dictionary<string, FilprideChartOfAccount> accountTitlesDtoDictionary, CancellationToken cancellationToken = default)
+        public async Task BatchDepositAsync(CollectionReceipt collectionReceipt, Dictionary<string, ChartOfAccount> accountTitlesDtoDictionary, CancellationToken cancellationToken = default)
         {
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
             if (!accountTitlesDtoDictionary.TryGetValue("101010100", out var cashInBankTitle))
             {
                 throw new ArgumentException("Account title '101010100' not found.");
@@ -1114,7 +1114,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
 
             ledgers.Add(
-                new FilprideGeneralLedgerBook
+                new GeneralLedgerBook
                 {
                     Date = collectionReceipt.TransactionDate,
                     Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1137,7 +1137,7 @@ namespace IBS.DataAccess.Repository.Filpride
             );
 
             ledgers.Add(
-                new FilprideGeneralLedgerBook
+                new GeneralLedgerBook
                 {
                     Date = collectionReceipt.TransactionDate,
                     Reference = collectionReceipt.CollectionReceiptNo!,
@@ -1154,8 +1154,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 }
             );
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
         }
 
     }
 }
+

@@ -308,8 +308,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos unserved volume report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos unserved volume report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -429,8 +429,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos unserved volume report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos unserved volume report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -499,7 +499,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var currentUser = GetUserFullName();
                 var today = DateTimeHelper.GetCurrentPhilippineTime();
-                Expression<Func<FilprideDeliveryReceipt, bool>>? filter;
+                Expression<Func<DeliveryReceipt, bool>>? filter;
                 var dateRangeType = isDeliveredDateRange ? "ByRange" : "AsOf";
                 //var currencyFormatTwoDecimal = "#,##0.00";
 
@@ -529,7 +529,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                   && i.VoidedBy == null;
                 }
 
-                var deliveryReceipts = await _unitOfWork.FilprideDeliveryReceipt
+                var deliveryReceipts = await _unitOfWork.DeliveryReceipt
                     .GetAllAsync(filter, cancellationToken);
 
                 if (!deliveryReceipts.Any())
@@ -540,7 +540,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 deliveryReceipts = deliveryReceipts.OrderBy(dr => dr.Date);
                 var dispatchDrIds = deliveryReceipts.Select(dr => dr.DeliveryReceiptId).ToList();
-                var receivingReportAggregates = await _dbContext.FilprideReceivingReports
+                var receivingReportAggregates = await _dbContext.ReceivingReports
                     .Where(rr => rr.DeliveryReceiptId.HasValue
                                 && dispatchDrIds.Contains(rr.DeliveryReceiptId.Value)
                                 && rr.Status == nameof(Status.Posted))
@@ -1090,8 +1090,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate dispatch report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate dispatch report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -1135,7 +1135,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
                 var currentUser = GetUserFullName();
                 var today = DateTimeHelper.GetCurrentPhilippineTime();
-                Expression<Func<FilprideDeliveryReceipt, bool>>? filter;
+                Expression<Func<DeliveryReceipt, bool>>? filter;
                 var dateRangeType = isDeliveredDateRange ? "ByRange" : "AsOf";
                 var currencyFormatTwoDecimal = "#,##0.00";
 
@@ -1198,7 +1198,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         && i.Status == nameof(DRStatus.PendingDelivery);
                 }
 
-                var deliveryReceipts = await _unitOfWork.FilprideDeliveryReceipt
+                var deliveryReceipts = await _unitOfWork.DeliveryReceipt
                     .GetAllAsync(filter, cancellationToken);
 
                 if (!deliveryReceipts.Any())
@@ -1211,7 +1211,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var drIds = deliveryReceipts
                     .Select(dr => dr.DeliveryReceiptId)
                     .ToList();
-                var receivingReports = await _dbContext.FilprideReceivingReports
+                var receivingReports = await _dbContext.ReceivingReports
                     .Where(rr => rr.DeliveryReceiptId != null
                                 && drIds.Contains(rr.DeliveryReceiptId.Value)
                                 && rr.Status == nameof(Status.Posted))
@@ -1662,8 +1662,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate dispatch report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate dispatch report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -1847,7 +1847,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                     var overallTotalQuantity = 0m;
                                     var overallTotalAmount = 0m;
 
-                                    var repoCalculator = _unitOfWork.FilprideDeliveryReceipt;
+                                    var repoCalculator = _unitOfWork.DeliveryReceipt;
 
                                 #endregion
 
@@ -2081,8 +2081,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -2219,7 +2219,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalFreightNetOfVat = 0m;
                 var totalCommissionRate = 0m;
                 var totalVat = 0m;
-                var repoCalculator = _unitOfWork.FilprideDeliveryReceipt;
+                var repoCalculator = _unitOfWork.DeliveryReceipt;
                 var productList = GetOrderedProductNames(
                     salesReport,
                     sr => sr.DeliveryReceipt.CustomerOrderSlip!.ProductName);
@@ -2627,8 +2627,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -2683,10 +2683,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return RedirectToAction(nameof(PostedCollection));
                 }
 
-                var multipleSalesInvoicesByCollectionReceiptId = new Dictionary<int, List<FilprideSalesInvoice>>();
+                var multipleSalesInvoicesByCollectionReceiptId = new Dictionary<int, List<SalesInvoice>>();
                 foreach (var receipt in collectionReceiptReport.Where(cr => cr.MultipleSIId != null))
                 {
-                    var salesInvoices = await _unitOfWork.FilprideSalesInvoice
+                    var salesInvoices = await _unitOfWork.SalesInvoice
                         .GetAllAsync(x => receipt.MultipleSIId!.Contains(x.SalesInvoiceId), cancellationToken);
 
                     multipleSalesInvoicesByCollectionReceiptId[receipt.CollectionReceiptId] = salesInvoices.ToList();
@@ -2886,8 +2886,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate posted collection report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate posted collection report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -2938,8 +2938,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         .ToList();
 
                     var salesInvoicesById = multipleSalesInvoiceIds.Count == 0
-                        ? new Dictionary<int, FilprideSalesInvoice>()
-                        : await _dbContext.FilprideSalesInvoices
+                        ? new Dictionary<int, SalesInvoice>()
+                        : await _dbContext.SalesInvoices
                             .AsNoTracking()
                             .Include(si => si.CustomerOrderSlip)
                             .Where(si => multipleSalesInvoiceIds.Contains(si.SalesInvoiceId))
@@ -3018,7 +3018,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     decimal totalCurrentAmount = 0;
                     decimal totalAdvanceAmount = 0;
 
-                    void WriteVoidColumns(int targetRow, FilprideCollectionReceipt collectionReceipt)
+                    void WriteVoidColumns(int targetRow, CollectionReceipt collectionReceipt)
                     {
                         if (!showVoidCancelColumns)
                         {
@@ -3059,7 +3059,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     void WriteCollectionRow(
-                        FilprideCollectionReceipt collectionReceipt,
+                        CollectionReceipt collectionReceipt,
                         string? customerName,
                         string? customerType,
                         IEnumerable<(DateOnly InvoiceDate, decimal Amount)> invoiceAllocations,
@@ -3203,7 +3203,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                         if (cr.MultipleSIId != null)
                         {
-                            var salesInvoices = new List<FilprideSalesInvoice>();
+                            var salesInvoices = new List<SalesInvoice>();
                             foreach (var salesInvoiceId in cr.MultipleSIId)
                             {
                                 if (salesInvoicesById.TryGetValue(salesInvoiceId, out var salesInvoice))
@@ -3325,8 +3325,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                     #region -- Audit Trail --
 
-                    FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate posted collection report excel file", "Accounts Receivable Report", companyClaims);
-                    await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                    AuditTrail auditTrailBook = new(GetUserFullName(), "Generate posted collection report excel file", "Accounts Receivable Report", companyClaims);
+                    await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                     #endregion
 
@@ -3372,7 +3372,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var salesInvoice = await _unitOfWork.FilprideSalesInvoice
+                var salesInvoice = await _unitOfWork.SalesInvoice
                     .GetAllAsync(si => si.PostedBy != null
                                        && si.AmountPaid == 0
                                        && !si.IsPaid && si.Company == companyClaims, cancellationToken);
@@ -3510,7 +3510,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                 var totalSixtyOneToNinetyDays = 0m;
                                 var totalOverNinetyDays = 0m;
 
-                                var repoCalculator = _unitOfWork.FilprideSalesInvoice;
+                                var repoCalculator = _unitOfWork.SalesInvoice;
 
                                 foreach (var record in salesInvoice)
                                 {
@@ -3617,8 +3617,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate aging report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate aging report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -3654,7 +3654,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var extractedBy = GetUserFullName();
                 var companyClaims = await GetCompanyClaimAsync();
 
-                var salesInvoice = await _unitOfWork.FilprideSalesInvoice
+                var salesInvoice = await _unitOfWork.SalesInvoice
                     .GetAllAsync(si => si.PostedBy != null
                                        && si.AmountPaid == 0 && !si.IsPaid
                                        && si.Company == companyClaims, cancellationToken);
@@ -3744,7 +3744,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalThirtyOneToSixtyDays = 0m;
                 var totalSixtyOneToNinetyDays = 0m;
                 var totalOverNinetyDays = 0m;
-                var repoCalculator = _unitOfWork.FilprideSalesInvoice;
+                var repoCalculator = _unitOfWork.SalesInvoice;
 
                 foreach (var si in salesInvoice)
                 {
@@ -3876,8 +3876,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate aging report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate aging report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -4072,7 +4072,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                 var totalEwtAmount = 0m;
                                 var totalEwtAmountPaid = 0m;
                                 var totalEwtBalance = 0m;
-                                var repoCalculator = _unitOfWork.FilprideDeliveryReceipt;
+                                var repoCalculator = _unitOfWork.DeliveryReceipt;
 
                                 foreach (var groupByCustomer in salesInvoice.GroupBy(x => x.Customer))
                                 {
@@ -4219,8 +4219,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate ar per customer report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate ar per customer report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -4370,7 +4370,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalCwVatBalance = 0m;
                 var totalDebitAmount = 0m;
                 var totalCreditAmount = 0m;
-                var repoCalculator = _unitOfWork.FilprideDeliveryReceipt;
+                var repoCalculator = _unitOfWork.DeliveryReceipt;
 
                 foreach (var groupByCustomer in salesInvoice.GroupBy(x => x.Customer))
                 {
@@ -4620,8 +4620,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate ar per customer report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate ar per customer report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -4826,8 +4826,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate service invoice report quest pdf", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate service invoice report quest pdf", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -5011,8 +5011,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate service invoice report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate service invoice report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -5250,8 +5250,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales invoice report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate sales invoice report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -6073,8 +6073,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos summary report excel file", "Accounts Receivable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate cos summary report excel file", "Accounts Receivable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -6096,4 +6096,5 @@ namespace IBSWeb.Areas.Filpride.Controllers
         #endregion
     }
 }
+
 

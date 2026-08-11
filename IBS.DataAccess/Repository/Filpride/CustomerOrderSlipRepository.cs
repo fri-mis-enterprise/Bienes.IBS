@@ -11,7 +11,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class CustomerOrderSlipRepository : Repository<FilprideCustomerOrderSlip>, ICustomerOrderSlipRepository
+    public class CustomerOrderSlipRepository : Repository<CustomerOrderSlip>, ICustomerOrderSlipRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -23,7 +23,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task<string> GenerateCodeAsync(string companyClaims, CancellationToken cancellationToken = default)
         {
             var lastCos = await _db
-                .FilprideCustomerOrderSlips
+                .CustomerOrderSlips
                 .AsNoTracking()
                 .OrderByDescending(x => x.CustomerOrderSlipNo.Length)
                 .ThenByDescending(x => x.CustomerOrderSlipNo)
@@ -41,9 +41,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D10");
         }
 
-        public override async Task<IEnumerable<FilprideCustomerOrderSlip>> GetAllAsync(Expression<Func<FilprideCustomerOrderSlip, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<CustomerOrderSlip>> GetAllAsync(Expression<Func<CustomerOrderSlip, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideCustomerOrderSlip> query = dbSet
+            IQueryable<CustomerOrderSlip> query = dbSet
                 .Include(cos => cos.Customer)
                 .Include(cos => cos.Hauler)
                 .Include(cos => cos.Product)
@@ -60,7 +60,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override async Task<FilprideCustomerOrderSlip?> GetAsync(Expression<Func<FilprideCustomerOrderSlip, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<CustomerOrderSlip?> GetAsync(Expression<Func<CustomerOrderSlip, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(cos => cos.Customer)
@@ -73,9 +73,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideCustomerOrderSlip> GetAllQuery(Expression<Func<FilprideCustomerOrderSlip, bool>>? filter = null)
+        public override IQueryable<CustomerOrderSlip> GetAllQuery(Expression<Func<CustomerOrderSlip, bool>>? filter = null)
         {
-            IQueryable<FilprideCustomerOrderSlip> query = dbSet
+            IQueryable<CustomerOrderSlip> query = dbSet
                 .Include(cos => cos.Customer)
                 .Include(cos => cos.Hauler)
                 .Include(cos => cos.Product)
@@ -100,7 +100,7 @@ namespace IBS.DataAccess.Repository.Filpride
             var existingRecord = await GetAsync(cos => cos.CustomerOrderSlipId == viewModel.CustomerOrderSlipId,
                 cancellationToken) ?? throw new NullReferenceException("CustomerOrderSlip not found");
 
-            var customer = await _db.FilprideCustomers
+            var customer = await _db.Customers
                 .FirstOrDefaultAsync(x => x.CustomerId == viewModel.CustomerId, cancellationToken)
                 ?? throw new ArgumentException("Customer not found");
 
@@ -108,7 +108,7 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(x => x.ProductId == viewModel.ProductId, cancellationToken)
                 ?? throw new ArgumentException("Product not found");
 
-            var commissionee = await _db.FilprideSuppliers
+            var commissionee = await _db.Suppliers
                 .FirstOrDefaultAsync(x => x.SupplierId == viewModel.CommissioneeId, cancellationToken);
 
             existingRecord.Date = viewModel.Date;
@@ -145,7 +145,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
             if (existingRecord.Branch != null)
             {
-                var branch = await _db.FilprideCustomerBranches
+                var branch = await _db.CustomerBranches
                     .Where(b => b.BranchName == existingRecord.Branch)
                     .FirstOrDefaultAsync(cancellationToken);
 
@@ -158,8 +158,8 @@ namespace IBS.DataAccess.Repository.Filpride
                 existingRecord.EditedBy = viewModel.CurrentUser;
                 existingRecord.EditedDate = DateTimeHelper.GetCurrentPhilippineTime();
 
-                FilprideAuditTrail auditTrailBook = new(existingRecord.EditedBy!, $"Edit customer order slip# {existingRecord.CustomerOrderSlipNo}", "Customer Order Slip", existingRecord.Company);
-                await _db.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingRecord.EditedBy!, $"Edit customer order slip# {existingRecord.CustomerOrderSlipNo}", "Customer Order Slip", existingRecord.Company);
+                await _db.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -171,7 +171,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetCosListNotDeliveredAsync(string companyClaims, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideCustomerOrderSlips
+            return await _db.CustomerOrderSlips
                 .OrderBy(cos => cos.CustomerOrderSlipId)
                 .Where(cos =>
                     cos.Company == companyClaims &&
@@ -186,7 +186,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetCosListPerCustomerNotDeliveredAsync(int customerId, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideCustomerOrderSlips
+            return await _db.CustomerOrderSlips
                 .OrderBy(cos => cos.CustomerOrderSlipId)
                 .Where(cos => ((!cos.IsDelivered &&
                                 cos.Status == nameof(CosStatus.Completed)) ||
@@ -203,7 +203,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetCosListPerCustomerAsync(int customerId, CancellationToken cancellationToken = default)
         {
-            var cos = await _db.FilprideCustomerOrderSlips
+            var cos = await _db.CustomerOrderSlips
                 .OrderBy(cos => cos.CustomerOrderSlipId)
                 .Where(cos => (cos.Status == nameof(CosStatus.ForDR) ||
                                cos.Status == nameof(CosStatus.Completed) ||
@@ -224,19 +224,19 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task<decimal> GetCustomerCreditBalance(int customerId, CancellationToken cancellationToken = default)
         {
             //Beginning Balance to be discussed
-            var drForTheMonth = await _db.FilprideDeliveryReceipts
+            var drForTheMonth = await _db.DeliveryReceipts
                 .Where(dr => dr.CustomerId == customerId
                              && dr.Date.Month == DateTimeHelper.GetCurrentPhilippineTime().Month
                              && dr.Date.Year == DateTimeHelper.GetCurrentPhilippineTime().Year)
                 .SumAsync(dr => dr.TotalAmount, cancellationToken);
 
-            var outstandingCos = await _db.FilprideCustomerOrderSlips
+            var outstandingCos = await _db.CustomerOrderSlips
                 .Where(cos => cos.CustomerId == customerId
                               && cos.ExpirationDate >= DateOnly.FromDateTime(DateTimeHelper.GetCurrentPhilippineTime())
                               && cos.Status == nameof(CosStatus.ForDR))
                 .SumAsync(cos => cos.TotalAmount, cancellationToken);
 
-            var availableCreditLimit = await _db.FilprideCustomers
+            var availableCreditLimit = await _db.Customers
                 .Where(c => c.CustomerId == customerId)
                 .Select(c => c.CreditLimitAsOfToday)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -245,3 +245,4 @@ namespace IBS.DataAccess.Repository.Filpride
         }
     }
 }
+

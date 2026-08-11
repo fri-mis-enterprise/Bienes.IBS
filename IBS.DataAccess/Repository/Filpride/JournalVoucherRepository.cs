@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class JournalVoucherRepository : Repository<FilprideJournalVoucherHeader>, IJournalVoucherRepository
+    public class JournalVoucherRepository : Repository<JournalVoucherHeader>, IJournalVoucherRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -30,7 +30,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastJv = await _db
-                .FilprideJournalVoucherHeaders
+                .JournalVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.JournalVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.JournalVoucherHeaderNo)
@@ -54,7 +54,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForUnDocumented(string company, CancellationToken cancellationToken = default)
         {
             var lastJv = await _db
-                .FilprideJournalVoucherHeaders
+                .JournalVoucherHeaders
                 .AsNoTracking()
                 .OrderByDescending(x => x.JournalVoucherHeaderNo!.Length)
                 .ThenByDescending(x => x.JournalVoucherHeaderNo)
@@ -75,7 +75,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D9");
         }
 
-        public override async Task<FilprideJournalVoucherHeader?> GetAsync(Expression<Func<FilprideJournalVoucherHeader, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<JournalVoucherHeader?> GetAsync(Expression<Func<JournalVoucherHeader, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(cv => cv.CheckVoucherHeader)
@@ -83,9 +83,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override async Task<IEnumerable<FilprideJournalVoucherHeader>> GetAllAsync(Expression<Func<FilprideJournalVoucherHeader, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<JournalVoucherHeader>> GetAllAsync(Expression<Func<JournalVoucherHeader, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilprideJournalVoucherHeader> query = dbSet
+            IQueryable<JournalVoucherHeader> query = dbSet
                 .Include(cv => cv.CheckVoucherHeader)
                 .ThenInclude(supplier => supplier!.Supplier);
 
@@ -97,9 +97,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override IQueryable<FilprideJournalVoucherHeader> GetAllQuery(Expression<Func<FilprideJournalVoucherHeader, bool>>? filter = null)
+        public override IQueryable<JournalVoucherHeader> GetAllQuery(Expression<Func<JournalVoucherHeader, bool>>? filter = null)
         {
-            IQueryable<FilprideJournalVoucherHeader> query =
+            IQueryable<JournalVoucherHeader> query =
                 dbSet
                 .Include(cv => cv.CheckVoucherHeader)
                 .ThenInclude(supplier => supplier!.Supplier)
@@ -114,20 +114,20 @@ namespace IBS.DataAccess.Repository.Filpride
             return query;
         }
 
-        public async Task PostAsync(FilprideJournalVoucherHeader header,
-            IEnumerable<FilprideJournalVoucherDetail> details,
+        public async Task PostAsync(JournalVoucherHeader header,
+            IEnumerable<JournalVoucherDetail> details,
             CancellationToken cancellationToken = default)
         {
             #region --General Ledger Book Recording(GL)--
 
             var accountTitlesDto = await GetListOfAccountTitleDto(cancellationToken);
-            var ledgers = new List<FilprideGeneralLedgerBook>();
+            var ledgers = new List<GeneralLedgerBook>();
 
             foreach (var detail in details)
             {
                 var account = accountTitlesDto.Find(c => c.AccountNumber == detail.AccountNo) ?? throw new ArgumentException($"Account title '{detail.AccountNo}' not found.");
                 ledgers.Add(
-                    new FilprideGeneralLedgerBook
+                    new GeneralLedgerBook
                     {
                         Date = header.Date,
                         Reference = header.JournalVoucherHeaderNo!,
@@ -153,7 +153,7 @@ namespace IBS.DataAccess.Repository.Filpride
                 throw new ArgumentException("Debit and Credit is not equal, check your entries.");
             }
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
 
             #endregion --General Ledger Book Recording(GL)--
 
@@ -161,3 +161,4 @@ namespace IBS.DataAccess.Repository.Filpride
         }
     }
 }
+

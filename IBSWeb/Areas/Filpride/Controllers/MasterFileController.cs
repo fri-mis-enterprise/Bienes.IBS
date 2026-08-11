@@ -82,13 +82,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 // Audit Trail
-                FilprideAuditTrail auditTrail = new(
+                AuditTrail auditTrail = new(
                     extractedBy,
                     $"Generate {masterFileType} master file excel",
                     $"{masterFileType}",
                     companyClaims
                 );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrail, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrail, cancellationToken);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
                 return File(result.stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.fileName);
@@ -116,7 +116,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             CancellationToken cancellationToken)
         {
             // Fetch customers
-            var customers = (await _unitOfWork.FilprideCustomer
+            var customers = (await _unitOfWork.Customer
                 .GetAllAsync(c => c.Company == company, cancellationToken))
                 .OrderBy(x => x.CustomerCode);
 
@@ -129,7 +129,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var customerIds = customers.Select(c => c.CustomerId).ToList();
 
             // Fetch branches separately
-            var branches = await _unitOfWork.FilprideCustomerBranch.GetAllAsync(
+            var branches = await _unitOfWork.CustomerBranch.GetAllAsync(
                 filter: b => customerIds.Contains(b.CustomerId),
                 cancellationToken: cancellationToken);
 
@@ -139,35 +139,35 @@ namespace IBSWeb.Areas.Filpride.Controllers
             // ===== WORKSHEET 1: Customer Master File =====
             var customerColumns = new List<ColumnDefinition>
             {
-                new() { Header = "CUSTOMER CODE", ValueSelector = c => ((FilprideCustomer)c).CustomerCode ?? "" },
-                new() { Header = "CUSTOMER NAME", ValueSelector = c => ((FilprideCustomer)c).CustomerName },
-                new() { Header = "CUSTOMER ADDRESS", ValueSelector = c => ((FilprideCustomer)c).CustomerAddress },
-                new() { Header = "TIN NO", ValueSelector = c => ((FilprideCustomer)c).CustomerTin },
-                new() { Header = "BUSINESS STYLE", ValueSelector = c => ((FilprideCustomer)c).BusinessStyle ?? "" },
-                new() { Header = "ZIP CODE", ValueSelector = c => ((FilprideCustomer)c).ZipCode ?? "" },
-                new() { Header = "CREDIT TERM", ValueSelector = c => ((FilprideCustomer)c).CustomerTerms },
+                new() { Header = "CUSTOMER CODE", ValueSelector = c => ((Customer)c).CustomerCode ?? "" },
+                new() { Header = "CUSTOMER NAME", ValueSelector = c => ((Customer)c).CustomerName },
+                new() { Header = "CUSTOMER ADDRESS", ValueSelector = c => ((Customer)c).CustomerAddress },
+                new() { Header = "TIN NO", ValueSelector = c => ((Customer)c).CustomerTin },
+                new() { Header = "BUSINESS STYLE", ValueSelector = c => ((Customer)c).BusinessStyle ?? "" },
+                new() { Header = "ZIP CODE", ValueSelector = c => ((Customer)c).ZipCode ?? "" },
+                new() { Header = "CREDIT TERM", ValueSelector = c => ((Customer)c).CustomerTerms },
                 new()
             {
                 Header = "CREDIT LIMIT",
-                ValueSelector = c => ((FilprideCustomer)c).CreditLimit,
+                ValueSelector = c => ((Customer)c).CreditLimit,
                 NumberFormat = "#,##0.00",
                 Alignment = ExcelHorizontalAlignment.Right
             },
             new()
             {
                 Header = "CREDIT LIMIT AS OF TODAY",
-                ValueSelector = c => ((FilprideCustomer)c).CreditLimitAsOfToday,
+                ValueSelector = c => ((Customer)c).CreditLimitAsOfToday,
                 NumberFormat = "#,##0.00",
                 Alignment = ExcelHorizontalAlignment.Right
             },
-            new() { Header = "STATION CODE", ValueSelector = c => ((FilprideCustomer)c).StationCode ?? "" },
-            new() { Header = "VAT TYPE", ValueSelector = c => ((FilprideCustomer)c).VatType },
-            new() { Header = "2306", ValueSelector = c => ((FilprideCustomer)c).WithHoldingTax },
-            new() { Header = "2307", ValueSelector = c => ((FilprideCustomer)c).WithHoldingVat },
-            new() { Header = "TYPE", ValueSelector = c => ((FilprideCustomer)c).Type },
-            new() { Header = "DEFAULT COMMISION RATE", ValueSelector = c => ((FilprideCustomer)c).CommissionRate },
-            new() { Header = "DEFAULT COMMISIONEE", ValueSelector = c => ((FilprideCustomer)c).Commissionee?.SupplierName ?? ""},
-            new() { Header = "STATUS", ValueSelector = c => ((FilprideCustomer)c).IsActive ? "Active" : "Inactive" },
+            new() { Header = "STATION CODE", ValueSelector = c => ((Customer)c).StationCode ?? "" },
+            new() { Header = "VAT TYPE", ValueSelector = c => ((Customer)c).VatType },
+            new() { Header = "2306", ValueSelector = c => ((Customer)c).WithHoldingTax },
+            new() { Header = "2307", ValueSelector = c => ((Customer)c).WithHoldingVat },
+            new() { Header = "TYPE", ValueSelector = c => ((Customer)c).Type },
+            new() { Header = "DEFAULT COMMISION RATE", ValueSelector = c => ((Customer)c).CommissionRate },
+            new() { Header = "DEFAULT COMMISIONEE", ValueSelector = c => ((Customer)c).Commissionee?.SupplierName ?? ""},
+            new() { Header = "STATUS", ValueSelector = c => ((Customer)c).IsActive ? "Active" : "Inactive" },
             };
 
             var customerWidths = new Dictionary<string, double>
@@ -196,9 +196,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 var branchColumns = new List<ColumnDefinition>
                 {
-                    new() { Header = "CUSTOMER NAME", ValueSelector = b => ((FilprideCustomerBranch)b).Customer?.CustomerName},
-                    new() { Header = "BRANCH NAME", ValueSelector = b => ((FilprideCustomerBranch)b).BranchName },
-                    new() { Header = "BRANCH ADDRESS", ValueSelector = b => ((FilprideCustomerBranch)b).BranchAddress  },
+                    new() { Header = "CUSTOMER NAME", ValueSelector = b => ((CustomerBranch)b).Customer?.CustomerName},
+                    new() { Header = "BRANCH NAME", ValueSelector = b => ((CustomerBranch)b).BranchName },
+                    new() { Header = "BRANCH ADDRESS", ValueSelector = b => ((CustomerBranch)b).BranchAddress  },
                 };
 
                 var branchWidths = new Dictionary<string, double>
@@ -239,7 +239,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                    string company,
                    CancellationToken cancellationToken)
         {
-            var suppliers = (await _unitOfWork.FilprideSupplier
+            var suppliers = (await _unitOfWork.Supplier
                     .GetAllAsync(s => s.Company == company, cancellationToken))
                 .OrderBy(x => x.SupplierCode);
 
@@ -250,17 +250,17 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             var columns = new List<ColumnDefinition>
             {
-                new() { Header = "SUPPLIER CODE", ValueSelector = s => ((FilprideSupplier)s).SupplierCode ?? "" },
-                new() { Header = "SUPPLIER NAME", ValueSelector = s => ((FilprideSupplier)s).SupplierName },
-                new() { Header = "SUPPLIER ADDRESS", ValueSelector = s => ((FilprideSupplier)s).SupplierAddress },
-                new() { Header = "ZIP CODE", ValueSelector = s => ((FilprideSupplier)s).ZipCode },
-                new() { Header = "BRANCH", ValueSelector = s => ((FilprideSupplier)s).Branch },
-                new() { Header = "TIN NO", ValueSelector = s => ((FilprideSupplier)s).SupplierTin },
-                new() { Header = "CREDIT TERMS", ValueSelector = s => ((FilprideSupplier)s).SupplierTerms },
-                new() { Header = "VATABLE", ValueSelector = s => ((FilprideSupplier)s).VatType },
-                new() { Header = "TAXABLE", ValueSelector = s => ((FilprideSupplier)s).TaxType },
-                new() { Header = "CATEGORY", ValueSelector = s => ((FilprideSupplier)s).Category },
-                new() { Header = "EWT RATE", ValueSelector = s => ((FilprideSupplier)s).WithholdingTaxPercent * 100 }
+                new() { Header = "SUPPLIER CODE", ValueSelector = s => ((Supplier)s).SupplierCode ?? "" },
+                new() { Header = "SUPPLIER NAME", ValueSelector = s => ((Supplier)s).SupplierName },
+                new() { Header = "SUPPLIER ADDRESS", ValueSelector = s => ((Supplier)s).SupplierAddress },
+                new() { Header = "ZIP CODE", ValueSelector = s => ((Supplier)s).ZipCode },
+                new() { Header = "BRANCH", ValueSelector = s => ((Supplier)s).Branch },
+                new() { Header = "TIN NO", ValueSelector = s => ((Supplier)s).SupplierTin },
+                new() { Header = "CREDIT TERMS", ValueSelector = s => ((Supplier)s).SupplierTerms },
+                new() { Header = "VATABLE", ValueSelector = s => ((Supplier)s).VatType },
+                new() { Header = "TAXABLE", ValueSelector = s => ((Supplier)s).TaxType },
+                new() { Header = "CATEGORY", ValueSelector = s => ((Supplier)s).Category },
+                new() { Header = "EWT RATE", ValueSelector = s => ((Supplier)s).WithholdingTaxPercent * 100 }
             };
 
             var customWidths = new Dictionary<string, double>
@@ -290,7 +290,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             string company,
             CancellationToken cancellationToken)
         {
-            var bankAccounts = (await _unitOfWork.FilprideBankAccount.GetAllAsync(
+            var bankAccounts = (await _unitOfWork.BankAccount.GetAllAsync(
                 filter: b => b.Company == company,
                 cancellationToken: cancellationToken))
                 .OrderBy(x => x.AccountNo);
@@ -302,10 +302,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             var columns = new List<ColumnDefinition>
             {
-                new() { Header = "ACCOUNT NO", ValueSelector = b => ((FilprideBankAccount)b).AccountNo },
-                new() { Header = "ACCOUNT NAME", ValueSelector = b => ((FilprideBankAccount)b).AccountName },
-                new() { Header = "BANK", ValueSelector = b => ((FilprideBankAccount)b).Bank },
-                new() { Header = "BRANCH", ValueSelector = b => ((FilprideBankAccount)b).Branch },
+                new() { Header = "ACCOUNT NO", ValueSelector = b => ((BankAccount)b).AccountNo },
+                new() { Header = "ACCOUNT NAME", ValueSelector = b => ((BankAccount)b).AccountName },
+                new() { Header = "BANK", ValueSelector = b => ((BankAccount)b).Bank },
+                new() { Header = "BRANCH", ValueSelector = b => ((BankAccount)b).Branch },
             };
 
             var customWidths = new Dictionary<string, double>
@@ -335,7 +335,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             string company,
             CancellationToken cancellationToken)
         {
-            var services = (await _unitOfWork.FilprideService.GetAllAsync(
+            var services = (await _unitOfWork.Service.GetAllAsync(
                 cancellationToken: cancellationToken))
                 .OrderBy(x => x.ServiceNo);
 
@@ -346,9 +346,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             var columns = new List<ColumnDefinition>
             {
-                new() { Header = "SERVICE NO", ValueSelector = s => ((FilprideService)s).ServiceNo },
-                new() { Header = "SERVICE NAME", ValueSelector = s => ((FilprideService)s).Name },
-                new() { Header = "PERCENT", ValueSelector = s => ((FilprideService)s).Percent},
+                new() { Header = "SERVICE NO", ValueSelector = s => ((Service)s).ServiceNo },
+                new() { Header = "SERVICE NAME", ValueSelector = s => ((Service)s).Name },
+                new() { Header = "PERCENT", ValueSelector = s => ((Service)s).Percent},
             };
 
             var customWidths = new Dictionary<string, double>

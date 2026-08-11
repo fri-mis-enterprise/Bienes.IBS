@@ -55,7 +55,7 @@ namespace IBS.Services
         {
             try
             {
-                var hasUnliftedDrs = await _dbContext.FilprideDeliveryReceipts
+                var hasUnliftedDrs = await _dbContext.DeliveryReceipts
                     .AnyAsync(x => x.Date.Month == previousMonthDate.Month
                                    && x.Date.Year == previousMonthDate.Year
                                    && !x.HasReceivingReport);
@@ -102,7 +102,7 @@ namespace IBS.Services
                     return;
                 }
 
-                var newJournalVouchers = new List<FilprideJournalVoucherHeader>();
+                var newJournalVouchers = new List<JournalVoucherHeader>();
 
                 var groupedAmortizations = amortizationSetting
                     .GroupBy(a => new { a.JvHeader.Company, a.JvHeader.Type })
@@ -126,7 +126,7 @@ namespace IBS.Services
 
                         var generatedCode = IncrementCode(baseCode, offset++);
 
-                        var newHeader = new FilprideJournalVoucherHeader
+                        var newHeader = new JournalVoucherHeader
                         {
                             Type = sourceJv.Type,
                             JournalVoucherHeaderNo = generatedCode,
@@ -140,7 +140,7 @@ namespace IBS.Services
                             Company = sourceJv.Company,
                             JvType = nameof(JvType.Amortization),
                             Status = nameof(JvStatus.Pending),
-                            Details = sourceJv.Details.Select(detail => new FilprideJournalVoucherDetail
+                            Details = sourceJv.Details.Select(detail => new JournalVoucherDetail
                             {
                                 AccountNo = detail.AccountNo,
                                 AccountName = detail.AccountName,
@@ -164,7 +164,7 @@ namespace IBS.Services
                     }
                 }
 
-                await _dbContext.FilprideJournalVoucherHeaders.AddRangeAsync(newJournalVouchers);
+                await _dbContext.JournalVoucherHeaders.AddRangeAsync(newJournalVouchers);
                 await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -215,3 +215,4 @@ namespace IBS.Services
         }
     }
 }
+

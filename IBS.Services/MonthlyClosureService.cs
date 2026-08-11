@@ -45,7 +45,7 @@ namespace IBS.Services
                     throw new InvalidOperationException($"{monthDate:MMMM yyyy} is not locked.");
                 }
 
-                var hasUnliftedDrs = await _dbContext.FilprideDeliveryReceipts
+                var hasUnliftedDrs = await _dbContext.DeliveryReceipts
                     .AnyAsync(x => x.Company == company &&
                                    x.Date.Month == monthDate.Month &&
                                    x.Date.Year == monthDate.Year &&
@@ -81,7 +81,7 @@ namespace IBS.Services
             {
                 var endOfPreviousMonth = periodMonth.AddDays(-1);
 
-                var disbursementsWithoutDcrDate = await _dbContext.FilprideCheckVoucherHeaders
+                var disbursementsWithoutDcrDate = await _dbContext.CheckVoucherHeaders
                     .Where(cv =>
                         cv.Company == company &&
                         cv.Date.Month == periodMonth.Month &&
@@ -100,8 +100,8 @@ namespace IBS.Services
                 foreach (var cv in disbursementsWithoutDcrDate)
                 {
                     var accountTitlesDto = await _unitOfWork.FilprideCheckVoucher.GetListOfAccountTitleDto(cancellationToken);
-                    var ledgers = new List<FilprideGeneralLedgerBook>();
-                    var details = await _dbContext.FilprideCheckVoucherDetails
+                    var ledgers = new List<GeneralLedgerBook>();
+                    var details = await _dbContext.CheckVoucherDetails
                         .Where(cvd => cvd.CheckVoucherHeaderId == cv.CheckVoucherHeaderId && !cvd.IsDisplayEntry)
                         .ToListAsync(cancellationToken);
 
@@ -110,7 +110,7 @@ namespace IBS.Services
                         var account = accountTitlesDto.Find(c => c.AccountNumber == detail.AccountNo)
                                       ?? throw new ArgumentException($"Account title '{detail.AccountNo}' not found.");
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = endOfPreviousMonth,
                             Reference = cv.CheckVoucherHeaderNo!,
@@ -129,7 +129,7 @@ namespace IBS.Services
                             ModuleType = nameof(ModuleType.Disbursement)
                         });
 
-                        ledgers.Add(new FilprideGeneralLedgerBook
+                        ledgers.Add(new GeneralLedgerBook
                         {
                             Date = periodMonth,
                             Reference = cv.CheckVoucherHeaderNo!,
@@ -154,7 +154,7 @@ namespace IBS.Services
                         }
                     }
 
-                    await _dbContext.FilprideGeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
+                    await _dbContext.GeneralLedgerBooks.AddRangeAsync(ledgers, cancellationToken);
                     await _dbContext.SaveChangesAsync(cancellationToken);
                 }
             }
@@ -169,7 +169,7 @@ namespace IBS.Services
         {
             try
             {
-                var hasAlreadyNibit = await _dbContext.FilprideMonthlyNibits
+                var hasAlreadyNibit = await _dbContext.MonthlyNibits
                     .AnyAsync(x =>
                         x.Month == periodMonth.Month &&
                         x.Year == periodMonth.Year &&
@@ -181,7 +181,7 @@ namespace IBS.Services
                     throw new InvalidOperationException($"Nibit for the period {periodMonth:MMM yyyy} already exist.");
                 }
 
-                var generalLedgers = await _dbContext.FilprideGeneralLedgerBooks
+                var generalLedgers = await _dbContext.GeneralLedgerBooks
                     .IgnoreQueryFilters()
                     .Include(gl => gl.Account)
                     .ThenInclude(filprideChartOfAccount => filprideChartOfAccount.ParentAccount) // Level 4
@@ -236,7 +236,7 @@ namespace IBS.Services
                     }
                 }
 
-                var nibitForThePeriod = new FilprideMonthlyNibit
+                var nibitForThePeriod = new MonthlyNibit
                 {
                     Month = periodMonth.Month,
                     Year = periodMonth.Year,
@@ -247,7 +247,7 @@ namespace IBS.Services
                         .Sum(g => g.Debit - g.Credit),
                 };
 
-                var beginning = await _dbContext.FilprideMonthlyNibits
+                var beginning = await _dbContext.MonthlyNibits
                     .OrderByDescending(m => m.Year)
                     .ThenByDescending(m => m.Month)
                     .FirstOrDefaultAsync(m => m.Company == company, cancellationToken);
@@ -259,7 +259,7 @@ namespace IBS.Services
 
                 nibitForThePeriod.EndingBalance = nibitForThePeriod.BeginningBalance + nibitForThePeriod.NetIncome + nibitForThePeriod.PriorPeriodAdjustment;
 
-                await _dbContext.FilprideMonthlyNibits.AddAsync(nibitForThePeriod, cancellationToken);
+                await _dbContext.MonthlyNibits.AddAsync(nibitForThePeriod, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
@@ -276,7 +276,7 @@ namespace IBS.Services
                 var periodEnd = periodMonth.AddMonths(1).AddDays(-1);
 
                 // Get all accounts from COA for this company
-                var allAccounts = await _dbContext.FilprideChartOfAccounts
+                var allAccounts = await _dbContext.ChartOfAccounts
                     .IgnoreQueryFilters()
                     .OrderBy(x => x.AccountNumber)
                     .ToListAsync(cancellationToken);
@@ -287,7 +287,7 @@ namespace IBS.Services
                     return;
                 }
 
-                var glEntries = await _dbContext.FilprideGeneralLedgerBooks
+                var glEntries = await _dbContext.GeneralLedgerBooks
                     .IgnoreQueryFilters()
                     .Include(x => x.Account)
                     .Where(x =>
@@ -332,7 +332,7 @@ namespace IBS.Services
                 var closedAt = DateTimeHelper.GetCurrentPhilippineTime();
 
                 // Get beginning balances for all accounts
-                var beginningBalancesDict = await _dbContext.FilprideGlPeriodBalances
+                var beginningBalancesDict = await _dbContext.GlPeriodBalances
                     .IgnoreQueryFilters()
                     .Where(x => x.IsValid && accountIds.Contains(x.AccountId) && x.PeriodEndDate < periodEnd)
                     .GroupBy(x => x.AccountId)
@@ -345,7 +345,7 @@ namespace IBS.Services
                     })
                     .ToDictionaryAsync(x => x.AccountId, x => x.EndingBalance, cancellationToken);
 
-                var glBalances = new List<FilprideGLPeriodBalance>();
+                var glBalances = new List<GLPeriodBalance>();
 
                 // Process all accounts from COA
                 foreach (var account in allAccounts)
@@ -363,7 +363,7 @@ namespace IBS.Services
 
                     var endingBalance = beginningBalance + totalBalance;
 
-                    glBalances.Add(new FilprideGLPeriodBalance
+                    glBalances.Add(new GLPeriodBalance
                     {
                         AccountId = account.AccountId,
                         PeriodStartDate = periodMonth,
@@ -380,11 +380,11 @@ namespace IBS.Services
                     });
                 }
 
-                var subAccountBalances = new List<FilprideGLSubAccountBalance>();
+                var subAccountBalances = new List<GLSubAccountBalance>();
 
                 if (glGroupedBySubAccount.Any())
                 {
-                    var subAccountBeginningBalances = await _dbContext.FilprideGlSubAccountBalances
+                    var subAccountBeginningBalances = await _dbContext.GlSubAccountBalances
                         .IgnoreQueryFilters()
                         .Where(x => x.IsValid && accountIds.Contains(x.AccountId) && x.PeriodEndDate < periodEnd)
                         .ToListAsync(cancellationToken);
@@ -417,7 +417,7 @@ namespace IBS.Services
 
                         var endingBalance = beginningBalance + totalBalance;
 
-                        subAccountBalances.Add(new FilprideGLSubAccountBalance
+                        subAccountBalances.Add(new GLSubAccountBalance
                         {
                             AccountId = subAccount.AccountId,
                             SubAccountType = subAccount.SubAccountType.Value,
@@ -439,12 +439,12 @@ namespace IBS.Services
 
                 if (glBalances.Any())
                 {
-                    await _dbContext.FilprideGlPeriodBalances.AddRangeAsync(glBalances, cancellationToken);
+                    await _dbContext.GlPeriodBalances.AddRangeAsync(glBalances, cancellationToken);
                 }
 
                 if (subAccountBalances.Any())
                 {
-                    await _dbContext.FilprideGlSubAccountBalances.AddRangeAsync(subAccountBalances, cancellationToken);
+                    await _dbContext.GlSubAccountBalances.AddRangeAsync(subAccountBalances, cancellationToken);
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -468,7 +468,7 @@ namespace IBS.Services
 
             try
             {
-                await _dbContext.FilprideMonthlyNibits
+                await _dbContext.MonthlyNibits
                      .Where(n =>
                         n.IsValid &&
                         n.Company == company &&
@@ -477,7 +477,7 @@ namespace IBS.Services
                      .ExecuteUpdateAsync(e =>
                          e.SetProperty(d => d.IsValid, false), cancellationToken);
 
-                await _dbContext.FilprideGlSubAccountBalances
+                await _dbContext.GlSubAccountBalances
                     .Where(s =>
                         s.IsValid &&
                         s.Company == company &&
@@ -485,7 +485,7 @@ namespace IBS.Services
                     .ExecuteUpdateAsync(e =>
                         e.SetProperty(d => d.IsValid, false), cancellationToken);
 
-                await _dbContext.FilprideGlPeriodBalances
+                await _dbContext.GlPeriodBalances
                     .Where(s =>
                         s.IsValid &&
                         s.Company == company &&
@@ -506,3 +506,4 @@ namespace IBS.Services
         }
     }
 }
+

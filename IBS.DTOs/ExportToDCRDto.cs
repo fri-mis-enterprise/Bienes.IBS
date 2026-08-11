@@ -29,7 +29,7 @@ namespace IBS.DTOs
         public bool ISCANCELLED { get; set; }
     }
 
-    public class FilprideCheckVoucherDetailsCsvForDcrDto
+    public class CheckVoucherDetailsCsvForDcrDto
     {
         public string ACCTCD { get; set; } = null!;
         public string ACCTNAME { get; set; } = null!;
@@ -53,3 +53,4 @@ namespace IBS.DTOs
         public string BANK { get; set; } = null!;
     }
 }
+

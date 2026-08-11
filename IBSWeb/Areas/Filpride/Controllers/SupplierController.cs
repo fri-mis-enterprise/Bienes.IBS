@@ -67,9 +67,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return $"{fileName}-{DateTimeHelper.GetCurrentPhilippineTime():yyyyMMddHHmmss}{extension}";
         }
 
-        private async Task PopulateSupplierFormListsAsync(FilprideSupplier model, CancellationToken cancellationToken)
+        private async Task PopulateSupplierFormListsAsync(Supplier model, CancellationToken cancellationToken)
         {
-            model.DefaultExpenses = await _dbContext.FilprideChartOfAccounts
+            model.DefaultExpenses = await _dbContext.ChartOfAccounts
                 .Where(coa => !coa.HasChildren)
                 .OrderBy(coa => coa.AccountNumber)
                 .Select(s => new SelectListItem
@@ -79,7 +79,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 })
                 .ToListAsync(cancellationToken);
 
-            model.WithholdingTaxList = await _dbContext.FilprideChartOfAccounts
+            model.WithholdingTaxList = await _dbContext.ChartOfAccounts
                 .Where(coa => coa.AccountNumber!.Contains("2010302") && !coa.HasChildren)
                 .OrderBy(coa => coa.AccountNumber)
                 .Select(s => new SelectListItem
@@ -89,10 +89,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 })
                 .ToListAsync(cancellationToken);
 
-            model.PaymentTerms = await _unitOfWork.FilprideTerms.GetFilprideTermsListAsyncByCode(cancellationToken);
+            model.PaymentTerms = await _unitOfWork.Terms.GetFilprideTermsListAsyncByCode(cancellationToken);
         }
 
-        private void ApplyEmployeeCategoryRules(FilprideSupplier model)
+        private void ApplyEmployeeCategoryRules(Supplier model)
         {
             if (string.Equals(model.Category, "Employee", StringComparison.OrdinalIgnoreCase))
             {
@@ -124,7 +124,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
-            FilprideSupplier model = new();
+            Supplier model = new();
 
             await PopulateSupplierFormListsAsync(model, cancellationToken);
 
@@ -133,7 +133,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FilprideSupplier model, IFormFile? registration, IFormFile? document, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(Supplier model, IFormFile? registration, IFormFile? document, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
 
@@ -151,14 +151,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return View(model);
             }
 
-            if (await _unitOfWork.FilprideSupplier.IsSupplierExistAsync(model.SupplierName, model.Category,
+            if (await _unitOfWork.Supplier.IsSupplierExistAsync(model.SupplierName, model.Category,
                     companyClaims, cancellationToken))
             {
                 ModelState.AddModelError("SupplierName", "Supplier already exist.");
                 return View(model);
             }
 
-            if (await _unitOfWork.FilprideSupplier.IsTinNoExistAsync(model.SupplierTin, model.Branch!,
+            if (await _unitOfWork.Supplier.IsTinNoExistAsync(model.SupplierTin, model.Branch!,
                     model.Category, companyClaims, cancellationToken))
             {
                 ModelState.AddModelError("SupplierTin", "Tin number already exist.");
@@ -181,18 +181,18 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     model.ProofOfExemptionFilePath = await _cloudStorageService.UploadFileAsync(document, model.ProofOfExemptionFileName!);
                 }
 
-                model.SupplierCode = await _unitOfWork.FilprideSupplier.GenerateCodeAsync(cancellationToken);
+                model.SupplierCode = await _unitOfWork.Supplier.GenerateCodeAsync(cancellationToken);
                 model.CreatedBy = GetUserFullName();
                 model.Company = companyClaims;
-                await _unitOfWork.FilprideSupplier.AddAsync(model, cancellationToken);
+                await _unitOfWork.Supplier.AddAsync(model, cancellationToken);
                 await _unitOfWork.SaveAsync(cancellationToken);
                 await _cacheService.RemoveAsync($"coa:{model.Company}", cancellationToken);
 
                 #region -- Audit Trail Recording --
 
-                FilprideAuditTrail auditTrailBook = new(model.CreatedBy!,
+                AuditTrail auditTrailBook = new(model.CreatedBy!,
                     $"Create new Supplier #{model.SupplierCode}", "Supplier", model.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recording --
 
@@ -214,7 +214,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var queried = _unitOfWork.FilprideSupplier
+                var queried = _unitOfWork.Supplier
                     .GetAllQuery();
 
                 var totalRecords = await queried.CountAsync(cancellationToken);
@@ -276,7 +276,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier.GetAsync(c => c.SupplierId == id, cancellationToken);
+            var supplier = await _unitOfWork.Supplier.GetAsync(c => c.SupplierId == id, cancellationToken);
 
             if (supplier == null)
             {
@@ -289,7 +289,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(FilprideSupplier model, IFormFile? registration, IFormFile? document, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(Supplier model, IFormFile? registration, IFormFile? document, CancellationToken cancellationToken)
         {
             await PopulateSupplierFormListsAsync(model, cancellationToken);
             ApplyEmployeeCategoryRules(model);
@@ -316,14 +316,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 model.EditedBy = GetUserFullName();
-                await _unitOfWork.FilprideSupplier.UpdateAsync(model, cancellationToken);
+                await _unitOfWork.Supplier.UpdateAsync(model, cancellationToken);
                 await _cacheService.RemoveAsync($"coa:{model.Company}", cancellationToken);
 
                 #region -- Audit Trail Recording --
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Edited Supplier #{model.SupplierCode}", "Supplier", (await GetCompanyClaimAsync())! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recording --
 
@@ -348,14 +348,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier.GetAsync(c => c.SupplierId == id, cancellationToken);
+            var supplier = await _unitOfWork.Supplier.GetAsync(c => c.SupplierId == id, cancellationToken);
 
             if (supplier == null)
             {
                 return NotFound();
             }
 
-            supplier.PaymentTerms = await _unitOfWork.FilprideTerms.GetFilprideTermsListAsyncByCode(cancellationToken);
+            supplier.PaymentTerms = await _unitOfWork.Terms.GetFilprideTermsListAsyncByCode(cancellationToken);
 
             return View(supplier);
         }
@@ -368,14 +368,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier.GetAsync(c => c.SupplierId == id, cancellationToken);
+            var supplier = await _unitOfWork.Supplier.GetAsync(c => c.SupplierId == id, cancellationToken);
 
             if (supplier == null)
             {
                 return NotFound();
             }
 
-            supplier.PaymentTerms = await _unitOfWork.FilprideTerms.GetFilprideTermsListAsyncByCode(cancellationToken);
+            supplier.PaymentTerms = await _unitOfWork.Terms.GetFilprideTermsListAsyncByCode(cancellationToken);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -387,9 +387,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(),
+                AuditTrail auditTrailBook = new(GetUserFullName(),
                     $"Activated Supplier #{supplier.SupplierCode}", "Supplier", (await GetCompanyClaimAsync())!);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -414,7 +414,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier
+            var supplier = await _unitOfWork.Supplier
                 .GetAsync(c => c.SupplierId == id, cancellationToken);
 
             if (supplier == null)
@@ -422,7 +422,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            supplier.PaymentTerms = await _unitOfWork.FilprideTerms.GetFilprideTermsListAsyncByCode(cancellationToken);
+            supplier.PaymentTerms = await _unitOfWork.Terms.GetFilprideTermsListAsyncByCode(cancellationToken);
 
             return View(supplier);
         }
@@ -435,14 +435,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier.GetAsync(c => c.SupplierId == id, cancellationToken);
+            var supplier = await _unitOfWork.Supplier.GetAsync(c => c.SupplierId == id, cancellationToken);
 
             if (supplier == null)
             {
                 return NotFound();
             }
 
-            supplier.PaymentTerms = await _unitOfWork.FilprideTerms.GetFilprideTermsListAsyncByCode(cancellationToken);
+            supplier.PaymentTerms = await _unitOfWork.Terms.GetFilprideTermsListAsyncByCode(cancellationToken);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -454,9 +454,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Deactivated Supplier #{supplier.SupplierCode}", "Supplier", (await GetCompanyClaimAsync())! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -483,7 +483,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var suppliers = await _unitOfWork.FilprideSupplier
+                var suppliers = await _unitOfWork.Supplier
                     .GetAllAsync(null, cancellationToken);
 
                 // Apply date range filter if provided (using CreatedDate)
@@ -556,7 +556,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         var totalRecords = suppliers.Count();
 
         // Apply pagination - HANDLE -1 FOR "ALL"
-        IEnumerable<FilprideSupplier> pagedSuppliers;
+        IEnumerable<Supplier> pagedSuppliers;
 
         if (parameters.Length == -1)
         {
@@ -619,7 +619,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var recordIds = selectedRecord.Split(',').Select(int.Parse).ToList();
 
             // Retrieve the selected invoices from the database
-            var selectedList = await _dbContext.FilprideSuppliers
+            var selectedList = await _dbContext.Suppliers
                 .Where(supp => recordIds.Contains(supp.SupplierId))
                 .OrderBy(supp => supp.SupplierCode)
                 .ToListAsync();
@@ -695,7 +695,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public IActionResult GetAllSupplierIds()
         {
-            var supplierIds = _dbContext.FilprideSuppliers
+            var supplierIds = _dbContext.Suppliers
                  .Select(s => s.SupplierId)
                  .ToList();
 
@@ -703,3 +703,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

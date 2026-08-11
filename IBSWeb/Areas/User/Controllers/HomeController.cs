@@ -121,66 +121,66 @@ namespace IBSWeb.Areas.User.Controllers
             var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var counts = new DashboardCountViewModel();
 
-            counts.MarketingApprovalCount = await ctx.FilprideCustomerOrderSlips
+            counts.MarketingApprovalCount = await ctx.CustomerOrderSlips
                 .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfMarketing) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.SupplierAppointmentCount = await ctx.FilprideCustomerOrderSlips
+            counts.SupplierAppointmentCount = await ctx.CustomerOrderSlips
                 .Where(cos => (cos.Status == nameof(CosStatus.HaulerAppointed) || cos.Status == nameof(CosStatus.Created)) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.HaulerAppointmentCount = await ctx.FilprideCustomerOrderSlips
+            counts.HaulerAppointmentCount = await ctx.CustomerOrderSlips
                 .Where(cos => (cos.Status == nameof(CosStatus.SupplierAppointed) || cos.Status == nameof(CosStatus.Created)) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.ATLBookingCount = await ctx.FilprideCustomerOrderSlips
+            counts.ATLBookingCount = await ctx.CustomerOrderSlips
                 .Where(cos => !cos.IsCosAtlFinalized && !string.IsNullOrEmpty(cos.Depot)
                     && cos.Status != nameof(CosStatus.Closed) && cos.Status != nameof(CosStatus.Disapproved)
                     && cos.Status != nameof(CosStatus.Expired) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.OMApprovalCOSCount = await ctx.FilprideCustomerOrderSlips
+            counts.OMApprovalCOSCount = await ctx.CustomerOrderSlips
                 .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfOM) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.OMApprovalDRCount = await ctx.FilprideDeliveryReceipts
+            counts.OMApprovalDRCount = await ctx.DeliveryReceipts
                 .Where(dr => dr.Status == nameof(CosStatus.ForApprovalOfOM) && dr.Company == companyClaims)
                 .CountAsync();
-            counts.OMApprovalPOCount = await ctx.FilpridePurchaseOrders
+            counts.OMApprovalPOCount = await ctx.PurchaseOrders
                 .Where(po => po.Status == nameof(CosStatus.ForApprovalOfOM) && po.Company == companyClaims)
                 .CountAsync();
-            counts.CNCApprovalCount = await ctx.FilprideCustomerOrderSlips
+            counts.CNCApprovalCount = await ctx.CustomerOrderSlips
                 .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfCNC) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.FMApprovalCount = await ctx.FilprideCustomerOrderSlips
+            counts.FMApprovalCount = await ctx.CustomerOrderSlips
                 .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfFM) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.FMApprovalDMCount = await ctx.FilprideDebitMemos
+            counts.FMApprovalDMCount = await ctx.DebitMemos
                 .Where(dm => dm.Status == nameof(DmCmStatus.ForApprovalOfFM) && dm.Company == companyClaims)
                 .CountAsync();
-            counts.FMApprovalCMCount = await ctx.FilprideCreditMemos
+            counts.FMApprovalCMCount = await ctx.CreditMemos
                 .Where(cm => cm.Status == nameof(DmCmStatus.ForApprovalOfFM) && cm.Company == companyClaims)
                 .CountAsync();
-            counts.DRCount = await ctx.FilprideCustomerOrderSlips
+            counts.DRCount = await ctx.CustomerOrderSlips
                 .Where(cos => cos.Status == nameof(CosStatus.ForDR) && cos.Company == companyClaims)
                 .CountAsync();
-            counts.InTransitCount = await ctx.FilprideDeliveryReceipts
+            counts.InTransitCount = await ctx.DeliveryReceipts
                 .Where(dr => dr.Status == nameof(DRStatus.PendingDelivery) && dr.Company == companyClaims)
                 .CountAsync();
-            counts.ForInvoiceCount = await ctx.FilprideDeliveryReceipts
+            counts.ForInvoiceCount = await ctx.DeliveryReceipts
                 .Where(dr => dr.Status == nameof(DRStatus.ForInvoicing) && dr.Company == companyClaims)
                 .CountAsync();
-            counts.RecordLiftingDateCount = await ctx.FilprideDeliveryReceipts
+            counts.RecordLiftingDateCount = await ctx.DeliveryReceipts
                 .Where(dr => !dr.HasReceivingReport && dr.CanceledBy == null && dr.VoidedBy == null && dr.Company == companyClaims)
                 .CountAsync();
-            counts.RecordSupplierDetails = await ctx.FilprideReceivingReports
+            counts.RecordSupplierDetails = await ctx.ReceivingReports
                 .Where(rr => (rr.SupplierDrNo == null || rr.SupplierInvoiceDate == null || rr.SupplierInvoiceNumber == null
                     || rr.WithdrawalCertificate == null || rr.CostBasedOnSoa == 0)
                     && rr.CanceledBy == null && rr.VoidedBy == null && rr.Company == companyClaims)
                 .CountAsync();
-            counts.JournalVoucherForApprovalCount = await ctx.FilprideJournalVoucherHeaders
+            counts.JournalVoucherForApprovalCount = await ctx.JournalVoucherHeaders
                 .Where(jv => jv.Status == nameof(JvStatus.ForApproval) && jv.Company == companyClaims)
                 .CountAsync();
-            counts.CheckVoucherNonTradeInvoiceForApprovalCount = await ctx.FilprideCheckVoucherHeaders
+            counts.CheckVoucherNonTradeInvoiceForApprovalCount = await ctx.CheckVoucherHeaders
                 .Where(cv => cv.Status == nameof(CheckVoucherInvoiceStatus.ForApproval) && cv.Company == companyClaims
                     && cv.CvType == nameof(CVType.Invoicing) && !cv.IsPayroll)
                 .CountAsync();
-            counts.CheckVoucherNonTradePayrollInvoiceForApprovalCount = await ctx.FilprideCheckVoucherHeaders
+            counts.CheckVoucherNonTradePayrollInvoiceForApprovalCount = await ctx.CheckVoucherHeaders
                 .Where(cv => cv.Status == nameof(CheckVoucherInvoiceStatus.ForApproval) && cv.Company == companyClaims
                     && cv.CvType == nameof(CVType.Invoicing) && cv.IsPayroll)
                 .CountAsync();
@@ -193,7 +193,7 @@ namespace IBSWeb.Areas.User.Controllers
             await using var scope = _scopeFactory.CreateAsyncScope();
             var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var cosList = await ctx.FilprideCustomerOrderSlips
+            var cosList = await ctx.CustomerOrderSlips
                 .Where(cos => cos.CreatedBy == userFullName && cos.Company == companyClaims
                     && cos.CreatedDate >= twoMonthsAgo && !terminalStatuses.Contains(cos.Status))
                 .OrderByDescending(cos => cos.CreatedDate)
@@ -209,7 +209,7 @@ namespace IBSWeb.Areas.User.Controllers
                     CreatedDate = cos.CreatedDate
                 })
                 .ToListAsync();
-            var cvList = await ctx.FilprideCheckVoucherHeaders
+            var cvList = await ctx.CheckVoucherHeaders
                 .Where(cv => cv.CreatedBy == userFullName && cv.Company == companyClaims
                     && cv.CreatedDate >= twoMonthsAgo
                     && cv.Status != nameof(CheckVoucherInvoiceStatus.Paid)
@@ -232,7 +232,7 @@ namespace IBSWeb.Areas.User.Controllers
                 })
                 .ToListAsync();
 
-            var jvList = await ctx.FilprideJournalVoucherHeaders
+            var jvList = await ctx.JournalVoucherHeaders
                 .Where(jv => jv.CreatedBy == userFullName && jv.Company == companyClaims
                     && jv.CreatedDate >= twoMonthsAgo
                     && jv.Status != nameof(JvStatus.Posted) && jv.Status != nameof(JvStatus.Canceled) && jv.Status != nameof(JvStatus.Voided))
@@ -250,7 +250,7 @@ namespace IBSWeb.Areas.User.Controllers
                 })
                 .ToListAsync();
 
-            var dmList = await ctx.FilprideDebitMemos
+            var dmList = await ctx.DebitMemos
                 .Where(dm => dm.CreatedBy == userFullName && dm.Company == companyClaims
                     && dm.CreatedDate >= twoMonthsAgo
                     && dm.Status != nameof(DmCmStatus.Posted) && dm.Status != nameof(DmCmStatus.Voided) && dm.Status != nameof(DmCmStatus.Canceled))
@@ -268,7 +268,7 @@ namespace IBSWeb.Areas.User.Controllers
                 })
                 .ToListAsync();
 
-            var cmList = await ctx.FilprideCreditMemos
+            var cmList = await ctx.CreditMemos
                 .Where(cm => cm.CreatedBy == userFullName && cm.Company == companyClaims
                     && cm.CreatedDate >= twoMonthsAgo
                     && cm.Status != nameof(DmCmStatus.Posted) && cm.Status != nameof(DmCmStatus.Voided) && cm.Status != nameof(DmCmStatus.Canceled))
@@ -306,53 +306,53 @@ namespace IBSWeb.Areas.User.Controllers
 
             if (isAdmin || isHead || isMarketing)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.FilprideCustomerOrderSlips
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.CustomerOrderSlips
                     .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfMarketing) && cos.Company == companyClaims && cos.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isFinance)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.FilprideCustomerOrderSlips
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.CustomerOrderSlips
                     .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfFM) && cos.Company == companyClaims && cos.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isFinance || isAccounting)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectDm(ctx.FilprideDebitMemos
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectDm(ctx.DebitMemos
                     .Where(dm => dm.Status == nameof(DmCmStatus.ForApprovalOfFM) && dm.Company == companyClaims && dm.CreatedDate >= twoMonthsAgo))));
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCm(ctx.FilprideCreditMemos
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCm(ctx.CreditMemos
                     .Where(cm => cm.Status == nameof(DmCmStatus.ForApprovalOfFM) && cm.Company == companyClaims && cm.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isOps)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.FilprideCustomerOrderSlips
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.CustomerOrderSlips
                     .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfOM) && cos.Company == companyClaims && cos.CreatedDate >= twoMonthsAgo))));
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectDr(ctx.FilprideDeliveryReceipts
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectDr(ctx.DeliveryReceipts
                     .Where(dr => dr.Status == nameof(CosStatus.ForApprovalOfOM) && dr.Company == companyClaims && dr.CreatedDate >= twoMonthsAgo))));
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectPo(ctx.FilpridePurchaseOrders
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectPo(ctx.PurchaseOrders
                     .Where(po => po.Status == nameof(CosStatus.ForApprovalOfOM) && po.Company == companyClaims && po.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isAccounting)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCv(ctx.FilprideCheckVoucherHeaders
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCv(ctx.CheckVoucherHeaders
                     .Where(cv => cv.Status == nameof(CheckVoucherInvoiceStatus.ForApproval)
                         && cv.Company == companyClaims && cv.CreatedDate >= twoMonthsAgo
                         && cv.CvType == nameof(CVType.Invoicing) && !cv.IsPayroll))));
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectJv(ctx.FilprideJournalVoucherHeaders
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectJv(ctx.JournalVoucherHeaders
                     .Where(jv => jv.Status == nameof(JvStatus.ForApproval) && jv.Company == companyClaims && jv.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isCnc)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.FilprideCustomerOrderSlips
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectCos(ctx.CustomerOrderSlips
                     .Where(cos => cos.Status == nameof(CosStatus.ForApprovalOfCNC) && cos.Company == companyClaims && cos.CreatedDate >= twoMonthsAgo))));
             }
 
             if (isAdmin || isHead || isOps || isPort)
             {
-                pendingApproval.AddRange(await TakeLatestAsync(ProjectDr(ctx.FilprideDeliveryReceipts
+                pendingApproval.AddRange(await TakeLatestAsync(ProjectDr(ctx.DeliveryReceipts
                     .Where(dr => dr.Status == nameof(DRStatus.PendingDelivery) && dr.Company == companyClaims && dr.CreatedDate >= twoMonthsAgo))));
             }
 
@@ -362,7 +362,7 @@ namespace IBSWeb.Areas.User.Controllers
         private static async Task<List<PendingApprovalItem>> TakeLatestAsync(IQueryable<PendingApprovalItem> query) =>
             await query.OrderByDescending(x => x.CreatedDate).Take(10).ToListAsync();
 
-        private static IQueryable<PendingApprovalItem> ProjectCos(IQueryable<FilprideCustomerOrderSlip> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectCos(IQueryable<CustomerOrderSlip> query) =>
             query.Select(cos => new PendingApprovalItem
             {
                 Id = cos.CustomerOrderSlipId,
@@ -374,7 +374,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = cos.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectDr(IQueryable<FilprideDeliveryReceipt> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectDr(IQueryable<DeliveryReceipt> query) =>
             query.Select(dr => new PendingApprovalItem
             {
                 Id = dr.DeliveryReceiptId,
@@ -386,7 +386,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = dr.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectPo(IQueryable<FilpridePurchaseOrder> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectPo(IQueryable<PurchaseOrder> query) =>
             query.Select(po => new PendingApprovalItem
             {
                 Id = po.PurchaseOrderId,
@@ -398,7 +398,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = po.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectDm(IQueryable<FilprideDebitMemo> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectDm(IQueryable<DebitMemo> query) =>
             query.Select(dm => new PendingApprovalItem
             {
                 Id = dm.DebitMemoId,
@@ -410,7 +410,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = dm.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectCm(IQueryable<FilprideCreditMemo> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectCm(IQueryable<CreditMemo> query) =>
             query.Select(cm => new PendingApprovalItem
             {
                 Id = cm.CreditMemoId,
@@ -422,7 +422,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = cm.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectCv(IQueryable<FilprideCheckVoucherHeader> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectCv(IQueryable<CheckVoucherHeader> query) =>
             query.Select(cv => new PendingApprovalItem
             {
                 Id = cv.CheckVoucherHeaderId,
@@ -434,7 +434,7 @@ namespace IBSWeb.Areas.User.Controllers
                 CreatedDate = cv.CreatedDate
             });
 
-        private static IQueryable<PendingApprovalItem> ProjectJv(IQueryable<FilprideJournalVoucherHeader> query) =>
+        private static IQueryable<PendingApprovalItem> ProjectJv(IQueryable<JournalVoucherHeader> query) =>
             query.Select(jv => new PendingApprovalItem
             {
                 Id = jv.JournalVoucherHeaderId,
@@ -518,3 +518,4 @@ namespace IBSWeb.Areas.User.Controllers
         };
     }
 }
+

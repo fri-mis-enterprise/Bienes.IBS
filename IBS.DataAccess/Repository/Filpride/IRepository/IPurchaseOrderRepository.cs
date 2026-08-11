@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace IBS.DataAccess.Repository.Filpride.IRepository
 {
-    public interface IPurchaseOrderRepository : IRepository<FilpridePurchaseOrder>
+    public interface IPurchaseOrderRepository : IRepository<PurchaseOrder>
     {
         Task<string> GenerateCodeAsync(string company, string type, CancellationToken cancellationToken = default);
 
@@ -19,7 +19,7 @@ namespace IBS.DataAccess.Repository.Filpride.IRepository
 
         Task<string> GenerateCodeForSubPoAsync(string purchaseOrderNo, string company, CancellationToken cancellationToken = default);
 
-        Task UpdateActualCostOnSalesAndReceiptsAsync(FilpridePOActualPrice model, CancellationToken cancellationToken = default);
+        Task UpdateActualCostOnSalesAndReceiptsAsync(POActualPrice model, CancellationToken cancellationToken = default);
 
         Task<decimal> GetPurchaseOrderCost(int purchaseOrderId, CancellationToken cancellationToken = default);
 

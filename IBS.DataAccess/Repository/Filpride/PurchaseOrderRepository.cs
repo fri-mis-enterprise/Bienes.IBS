@@ -11,7 +11,7 @@ using System.Linq.Expressions;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class PurchaseOrderRepository : Repository<FilpridePurchaseOrder>, IPurchaseOrderRepository
+    public class PurchaseOrderRepository : Repository<PurchaseOrder>, IPurchaseOrderRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -33,7 +33,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForDocumented(string company, CancellationToken cancellationToken)
         {
             var lastPo = await _db
-                .FilpridePurchaseOrders
+                .PurchaseOrders
                 .AsNoTracking()
                 .OrderByDescending(x => x.PurchaseOrderNo!.Length)
                 .ThenByDescending(x => x.PurchaseOrderNo)
@@ -58,7 +58,7 @@ namespace IBS.DataAccess.Repository.Filpride
         private async Task<string> GenerateCodeForUnDocumented(string company, CancellationToken cancellationToken)
         {
             var lastPo = await _db
-                .FilpridePurchaseOrders
+                .PurchaseOrders
                 .AsNoTracking()
                 .OrderByDescending(x => x.PurchaseOrderNo!.Length)
                 .ThenByDescending(x => x.PurchaseOrderNo)
@@ -80,7 +80,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return lastSeries.Substring(0, 3) + incrementedNumber.ToString("D9");
         }
 
-        public override async Task<FilpridePurchaseOrder?> GetAsync(Expression<Func<FilpridePurchaseOrder, bool>> filter, CancellationToken cancellationToken = default)
+        public override async Task<PurchaseOrder?> GetAsync(Expression<Func<PurchaseOrder, bool>> filter, CancellationToken cancellationToken = default)
         {
             return await dbSet.Where(filter)
                 .Include(p => p.Supplier)
@@ -89,9 +89,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public override async Task<IEnumerable<FilpridePurchaseOrder>> GetAllAsync(Expression<Func<FilpridePurchaseOrder, bool>>? filter, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<PurchaseOrder>> GetAllAsync(Expression<Func<PurchaseOrder, bool>>? filter, CancellationToken cancellationToken = default)
         {
-            IQueryable<FilpridePurchaseOrder> query = dbSet
+            IQueryable<PurchaseOrder> query = dbSet
                 .Include(p => p.Supplier)
                 .Include(p => p.Product)
                 .Include(p => p.PickUpPoint);
@@ -104,9 +104,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return await query.ToListAsync(cancellationToken);
         }
 
-        public override IQueryable<FilpridePurchaseOrder> GetAllQuery(Expression<Func<FilpridePurchaseOrder, bool>>? filter = null)
+        public override IQueryable<PurchaseOrder> GetAllQuery(Expression<Func<PurchaseOrder, bool>>? filter = null)
         {
-            IQueryable<FilpridePurchaseOrder> query = dbSet
+            IQueryable<PurchaseOrder> query = dbSet
                 .Include(p => p.Supplier)
                 .Include(p => p.Product)
                 .Include(p => p.PickUpPoint)
@@ -124,7 +124,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetPurchaseOrderListAsyncByCode(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilpridePurchaseOrders
+            return await _db.PurchaseOrders
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Where(p => p.Company == company && !p.IsReceived && !p.IsSubPo && p.Status == nameof(Status.Posted))
                 .Select(po => new SelectListItem
@@ -137,7 +137,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetPurchaseOrderListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilpridePurchaseOrders
+            return await _db.PurchaseOrders
                 .Where(p => p.Company == company && !p.IsReceived && !p.IsSubPo && p.Status == nameof(Status.Posted))
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Select(po => new SelectListItem
@@ -150,7 +150,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetPurchaseOrderListAsyncBySupplier(int supplierId, CancellationToken cancellationToken = default)
         {
-            return await _db.FilpridePurchaseOrders
+            return await _db.PurchaseOrders
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Where(p => p.SupplierId == supplierId && !p.IsReceived && !p.IsSubPo && p.Status == nameof(Status.Posted))
                 .Select(po => new SelectListItem
@@ -163,7 +163,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetPurchaseOrderListAsyncBySupplierAndProduct(int supplierId, int productId, CancellationToken cancellationToken = default)
         {
-            return await _db.FilpridePurchaseOrders
+            return await _db.PurchaseOrders
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Where(p => p.SupplierId == supplierId && p.ProductId == productId && !p.IsReceived && !p.IsSubPo && p.Status == nameof(Status.Posted))
                 .Select(po => new SelectListItem
@@ -176,7 +176,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<string> GenerateCodeForSubPoAsync(string purchaseOrderNo, string company, CancellationToken cancellationToken = default)
         {
-            var latestSubPoCode = await _db.FilpridePurchaseOrders
+            var latestSubPoCode = await _db.PurchaseOrders
                 .Where(po => po.IsSubPo && po.Company == company && po.SubPoSeries!.Contains(purchaseOrderNo))
                 .OrderByDescending(po => po.SubPoSeries)
                 .Select(po => po.SubPoSeries)
@@ -191,7 +191,7 @@ namespace IBS.DataAccess.Repository.Filpride
             return $"{purchaseOrderNo}{nextLetter}";
         }
 
-        public async Task UpdateActualCostOnSalesAndReceiptsAsync(FilpridePOActualPrice model, CancellationToken cancellationToken = default)
+        public async Task UpdateActualCostOnSalesAndReceiptsAsync(POActualPrice model, CancellationToken cancellationToken = default)
         {
             // Early validation
             if (model.AppliedVolume >= model.TriggeredVolume)
@@ -200,7 +200,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
 
             // Single query to get all required data with optimized includes
-            var receivingReports = await _db.FilprideReceivingReports
+            var receivingReports = await _db.ReceivingReports
                 .Include(rr => rr.PurchaseOrder)
                     .ThenInclude(po => po!.Supplier)
                 .Include(rr => rr.PurchaseOrder)
@@ -219,7 +219,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
 
             // Get inventories and purchase books in parallel
-            var inventories = await _db.FilprideInventories
+            var inventories = await _db.Inventories
                 .Where(i => i.POId == model.PurchaseOrderId)
                 .OrderBy(i => i.Date)
                 .ThenBy(i => i.Particular == "Purchases" ? 0 : 1)
@@ -275,7 +275,7 @@ namespace IBS.DataAccess.Repository.Filpride
                 }
 
                 // Create GL entries for cost update
-                await unitOfWork.FilprideReceivingReport.CreateEntriesForUpdatingCost(
+                await unitOfWork.ReceivingReport.CreateEntriesForUpdatingCost(
                     receivingReport, difference, model.ApprovedBy!, cancellationToken);
 
                 await unitOfWork.LockedPeriodAdjustment.AddIfPeriodPostedAsync(new LockedPeriodAdjustmentRequestDto
@@ -300,7 +300,7 @@ namespace IBS.DataAccess.Repository.Filpride
             }
 
             // Recalculate inventory once at the end
-            await unitOfWork.FilprideInventory.ReCalculateInventoryAsync(inventories, cancellationToken);
+            await unitOfWork.Inventory.ReCalculateInventoryAsync(inventories, cancellationToken);
 
             // Single save operation
             await _db.SaveChangesAsync(cancellationToken);
@@ -308,7 +308,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<decimal> GetPurchaseOrderCost(int purchaseOrderId, CancellationToken cancellationToken = default)
         {
-            var purchaseOrder = await _db.FilpridePurchaseOrders
+            var purchaseOrder = await _db.PurchaseOrders
                 .Include(p => p.ActualPrices)
                 .FirstOrDefaultAsync(x => x.PurchaseOrderId == purchaseOrderId, cancellationToken)
                                 ?? throw new NullReferenceException("PurchaseOrder not found");
@@ -324,3 +324,4 @@ namespace IBS.DataAccess.Repository.Filpride
         }
     }
 }
+

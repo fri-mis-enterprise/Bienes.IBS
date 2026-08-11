@@ -76,17 +76,17 @@ namespace IBS.DataAccess.Repository
 
         #region--Filpride
 
-        public Filpride.IRepository.ICustomerOrderSlipRepository FilprideCustomerOrderSlip { get; private set; }
-        public IDeliveryReceiptRepository FilprideDeliveryReceipt { get; private set; }
-        public Filpride.IRepository.ICustomerRepository FilprideCustomer { get; private set; }
-        public Filpride.IRepository.ISupplierRepository FilprideSupplier { get; private set; }
-        public Filpride.IRepository.IPickUpPointRepository FilpridePickUpPoint { get; private set; }
-        public IFreightRepository FilprideFreight { get; private set; }
-        public IAuthorityToLoadRepository FilprideAuthorityToLoad { get; private set; }
-        public Filpride.IRepository.IChartOfAccountRepository FilprideChartOfAccount { get; private set; }
-        public IAuditTrailRepository FilprideAuditTrail { get; private set; }
-        public ICustomerBranchRepository FilprideCustomerBranch { get; private set; }
-        public ITermsRepository FilprideTerms { get; private set; }
+        public Filpride.IRepository.ICustomerOrderSlipRepository CustomerOrderSlip { get; private set; }
+        public IDeliveryReceiptRepository DeliveryReceipt { get; private set; }
+        public Filpride.IRepository.ICustomerRepository Customer { get; private set; }
+        public Filpride.IRepository.ISupplierRepository Supplier { get; private set; }
+        public Filpride.IRepository.IPickUpPointRepository PickUpPoint { get; private set; }
+        public IFreightRepository Freight { get; private set; }
+        public IAuthorityToLoadRepository AuthorityToLoad { get; private set; }
+        public Filpride.IRepository.IChartOfAccountRepository ChartOfAccount { get; private set; }
+        public IAuditTrailRepository AuditTrail { get; private set; }
+        public ICustomerBranchRepository CustomerBranch { get; private set; }
+        public ITermsRepository Terms { get; private set; }
         public Filpride.IRepository.IGeneralLedgerRepository GeneralLedger { get; private set; }
         public IProvisionalReceiptRepository ProvisionalReceipt { get; private set; }
         public ILockedPeriodAdjustmentRepository LockedPeriodAdjustment { get; private set; }
@@ -96,15 +96,15 @@ namespace IBS.DataAccess.Repository
         #region AAS
 
         #region Accounts Receivable
-        public ISalesInvoiceRepository FilprideSalesInvoice { get; private set; }
+        public ISalesInvoiceRepository SalesInvoice { get; private set; }
 
-        public Filpride.IRepository.IServiceInvoiceRepository FilprideServiceInvoice { get; private set; }
+        public Filpride.IRepository.IServiceInvoiceRepository ServiceInvoice { get; private set; }
 
-        public Filpride.IRepository.ICollectionReceiptRepository FilprideCollectionReceipt { get; private set; }
+        public Filpride.IRepository.ICollectionReceiptRepository CollectionReceipt { get; private set; }
 
-        public Filpride.IRepository.IDebitMemoRepository FilprideDebitMemo { get; private set; }
+        public Filpride.IRepository.IDebitMemoRepository DebitMemo { get; private set; }
 
-        public Filpride.IRepository.ICreditMemoRepository FilprideCreditMemo { get; private set; }
+        public Filpride.IRepository.ICreditMemoRepository CreditMemo { get; private set; }
         #endregion
 
         #region Accounts Payable
@@ -112,22 +112,22 @@ namespace IBS.DataAccess.Repository
 
         public Filpride.IRepository.IJournalVoucherRepository FilprideJournalVoucher { get; private set; }
 
-        public Filpride.IRepository.IPurchaseOrderRepository FilpridePurchaseOrder { get; private set; }
+        public Filpride.IRepository.IPurchaseOrderRepository PurchaseOrder { get; private set; }
 
-        public Filpride.IRepository.IReceivingReportRepository FilprideReceivingReport { get; private set; }
+        public Filpride.IRepository.IReceivingReportRepository ReceivingReport { get; private set; }
         #endregion
 
         #region Books and Report
-        public Filpride.IRepository.IInventoryRepository FilprideInventory { get; private set; }
+        public Filpride.IRepository.IInventoryRepository Inventory { get; private set; }
 
         public IReportRepository FilprideReport { get; private set; }
         #endregion
 
         #region Master File
 
-        public Filpride.IRepository.IBankAccountRepository FilprideBankAccount { get; private set; }
+        public Filpride.IRepository.IBankAccountRepository BankAccount { get; private set; }
 
-        public Filpride.IRepository.IServiceRepository FilprideService { get; private set; }
+        public Filpride.IRepository.IServiceRepository Service { get; private set; }
 
         #endregion
 
@@ -135,7 +135,7 @@ namespace IBS.DataAccess.Repository
 
         #region --Bienes
 
-        public IPlacementRepository BienesPlacement { get; private set; }
+        public IPlacementRepository Placement { get; private set; }
 
         #endregion
 
@@ -150,17 +150,17 @@ namespace IBS.DataAccess.Repository
 
             #region--Filpride
 
-            FilprideCustomerOrderSlip = new Filpride.CustomerOrderSlipRepository(_db);
-            FilprideDeliveryReceipt = new DeliveryReceiptRepository(_db);
-            FilprideCustomer = new Filpride.CustomerRepository(_db);
-            FilprideSupplier = new Filpride.SupplierRepository(_db);
-            FilpridePickUpPoint = new Filpride.PickUpPointRepository(_db);
-            FilprideFreight = new FreightRepository(_db);
-            FilprideAuthorityToLoad = new AuthorityToLoadRepository(_db);
-            FilprideChartOfAccount = new Filpride.ChartOfAccountRepository(_db);
-            FilprideAuditTrail = new AuditTrailRepository(_db);
-            FilprideCustomerBranch = new CustomerBranchRepository(_db);
-            FilprideTerms = new TermsRepository(_db);
+            CustomerOrderSlip = new Filpride.CustomerOrderSlipRepository(_db);
+            DeliveryReceipt = new DeliveryReceiptRepository(_db);
+            Customer = new Filpride.CustomerRepository(_db);
+            Supplier = new Filpride.SupplierRepository(_db);
+            PickUpPoint = new Filpride.PickUpPointRepository(_db);
+            Freight = new FreightRepository(_db);
+            AuthorityToLoad = new AuthorityToLoadRepository(_db);
+            ChartOfAccount = new Filpride.ChartOfAccountRepository(_db);
+            AuditTrail = new AuditTrailRepository(_db);
+            CustomerBranch = new CustomerBranchRepository(_db);
+            Terms = new TermsRepository(_db);
             GeneralLedger = new Filpride.GeneralLedgerRepository(_db);
             ProvisionalReceipt = new ProvisionalReceiptRepository(_db);
             LockedPeriodAdjustment = new LockedPeriodAdjustmentRepository(_db);
@@ -170,29 +170,29 @@ namespace IBS.DataAccess.Repository
             #region AAS
 
             #region Accounts Receivable
-            FilprideSalesInvoice = new SalesInvoiceRepository(_db);
-            FilprideServiceInvoice = new Filpride.ServiceInvoiceRepository(_db);
-            FilprideCollectionReceipt = new Filpride.CollectionReceiptRepository(_db);
-            FilprideDebitMemo = new Filpride.DebitMemoRepository(_db);
-            FilprideCreditMemo = new Filpride.CreditMemoRepository(_db);
+            SalesInvoice = new SalesInvoiceRepository(_db);
+            ServiceInvoice = new Filpride.ServiceInvoiceRepository(_db);
+            CollectionReceipt = new Filpride.CollectionReceiptRepository(_db);
+            DebitMemo = new Filpride.DebitMemoRepository(_db);
+            CreditMemo = new Filpride.CreditMemoRepository(_db);
             #endregion
 
             #region Accounts Payable
             FilprideCheckVoucher = new Filpride.CheckVoucherRepository(_db);
             FilprideJournalVoucher = new Filpride.JournalVoucherRepository(_db);
-            FilpridePurchaseOrder = new Filpride.PurchaseOrderRepository(_db);
-            FilprideReceivingReport = new Filpride.ReceivingReportRepository(_db);
+            PurchaseOrder = new Filpride.PurchaseOrderRepository(_db);
+            ReceivingReport = new Filpride.ReceivingReportRepository(_db);
             #endregion
 
             #region Books and Report
-            FilprideInventory = new Filpride.InventoryRepository(_db);
+            Inventory = new Filpride.InventoryRepository(_db);
             FilprideReport = new ReportRepository(_db);
             #endregion
 
             #region Master File
 
-            FilprideBankAccount = new Filpride.BankAccountRepository(_db);
-            FilprideService = new Filpride.ServiceRepository(_db);
+            BankAccount = new Filpride.BankAccountRepository(_db);
+            Service = new Filpride.ServiceRepository(_db);
 
             #endregion
 
@@ -200,7 +200,7 @@ namespace IBS.DataAccess.Repository
 
             #region --Bienes
 
-            BienesPlacement = new PlacementRepository(_db);
+            Placement = new PlacementRepository(_db);
 
             #endregion
         }
@@ -233,10 +233,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideCustomerListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideCustomers
+            return await _db.Customers
                 .OrderBy(c => c.CustomerName)
                 .Where(c => c.IsActive)
-                .Where(GetCompanyFilter<FilprideCustomer>(company))
+                .Where(GetCompanyFilter<Customer>(company))
                 .Select(c => new SelectListItem
                 {
                     Value = c.CustomerId.ToString(),
@@ -247,10 +247,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideSupplierListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierCode)
                 .Where(s => s.IsActive)
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .Select(s => new SelectListItem
                 {
                     Value = s.SupplierId.ToString(),
@@ -261,9 +261,9 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideEmployeeSupplierListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .Where(s => s.IsActive && s.Category == "Employee")
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .OrderBy(s => s.EmployeeNumber)
                 .ThenBy(s => s.SupplierName)
                 .Select(s => new SelectListItem
@@ -278,10 +278,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideTradeSupplierListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierCode)
                 .Where(s => s.IsActive && s.Category == "Trade")
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .Select(s => new SelectListItem
                 {
                     Value = s.SupplierId.ToString(),
@@ -292,10 +292,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideNonTradeSupplierListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierName)
                 .Where(s => s.IsActive && s.Category == "Non-Trade" || s.Category == "Employee")
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .Select(s => new SelectListItem
                 {
                     Value = s.SupplierId.ToString(),
@@ -306,10 +306,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideCommissioneeListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierCode)
                 .Where(s => s.IsActive && s.Category == "Commissionee")
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .Select(s => new SelectListItem
                 {
                     Value = s.SupplierId.ToString(),
@@ -320,10 +320,10 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideHaulerListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierCode)
                 .Where(s => s.IsActive && s.Company == company && s.Category == "Hauler")
-                .Where(GetCompanyFilter<FilprideSupplier>(company))
+                .Where(GetCompanyFilter<Supplier>(company))
                 .Select(s => new SelectListItem
                 {
                     Value = s.SupplierId.ToString(),
@@ -334,8 +334,8 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideBankAccountListById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideBankAccounts
-                .Where(GetCompanyFilter<FilprideBankAccount>(company))
+            return await _db.BankAccounts
+                .Where(GetCompanyFilter<BankAccount>(company))
                 .OrderBy(b => b.AccountNo)
                 .Select(ba => new SelectListItem
                 {
@@ -347,8 +347,8 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetDistinctFilpridePickupPointListById(string companyClaims, CancellationToken cancellationToken = default)
         {
-            return await _db.FilpridePickUpPoints
-                .Where(GetCompanyFilter<FilpridePickUpPoint>(companyClaims))
+            return await _db.PickUpPoints
+                .Where(GetCompanyFilter<PickUpPoint>(companyClaims))
                 .GroupBy(p => p.Depot)
                 .OrderBy(g => g.Key)
                 .Select(g => new SelectListItem
@@ -361,9 +361,9 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetFilprideServiceListById(string companyClaims, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideServices
+            return await _db.Services
                 .OrderBy(s => s.Name)
-                .Where(GetCompanyFilter<FilprideService>(companyClaims))
+                .Where(GetCompanyFilter<Service>(companyClaims))
                 .Select(s => new SelectListItem
                 {
                     Value = s.ServiceId.ToString(),
@@ -402,7 +402,7 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetChartOfAccountListAsyncById(CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideChartOfAccounts
+            return await _db.ChartOfAccounts
                 .Where(coa => !coa.HasChildren)
                 .OrderBy(coa => coa.AccountNumber)
                 .Select(s => new SelectListItem
@@ -415,7 +415,7 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetChartOfAccountListAsyncByNo(CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideChartOfAccounts
+            return await _db.ChartOfAccounts
                 .Where(coa => !coa.HasChildren)
                 .OrderBy(coa => coa.AccountNumber)
                 .Select(s => new SelectListItem
@@ -428,7 +428,7 @@ namespace IBS.DataAccess.Repository
 
         public async Task<List<SelectListItem>> GetChartOfAccountListAsyncByAccountTitle(CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideChartOfAccounts
+            return await _db.ChartOfAccounts
                 .Where(coa => !coa.HasChildren)
                 .OrderBy(coa => coa.AccountNumber)
                 .Select(s => new SelectListItem
@@ -466,3 +466,4 @@ namespace IBS.DataAccess.Repository
         }
     }
 }
+

@@ -71,7 +71,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                    ?? User.Identity?.Name!;
         }
 
-        private static decimal GetAppliedAdvanceAmount(IEnumerable<FilprideCheckVoucherDetail> details)
+        private static decimal GetAppliedAdvanceAmount(IEnumerable<CheckVoucherDetail> details)
         {
             return details
                 .Where(d => d.AccountNo == _advancesToSupplierAccountNo && !d.IsDisplayEntry)
@@ -98,7 +98,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         private async Task<decimal> GetAppliedAdvanceAmountAsync(int checkVoucherHeaderId, CancellationToken cancellationToken)
         {
-            return await _dbContext.FilprideCheckVoucherDetails
+            return await _dbContext.CheckVoucherDetails
                 .Where(d => d.CheckVoucherHeaderId == checkVoucherHeaderId &&
                             d.AccountNo == _advancesToSupplierAccountNo &&
                             !d.IsDisplayEntry)
@@ -113,7 +113,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .ToList() ?? [];
         }
 
-        private async Task<List<FilprideCheckVoucherHeader>> GetAdvanceHeadersAsync(
+        private async Task<List<CheckVoucherHeader>> GetAdvanceHeadersAsync(
             IEnumerable<string> referenceNumbers,
             string company,
             int? supplierId,
@@ -129,7 +129,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return [];
             }
 
-            return await _dbContext.FilprideCheckVoucherHeaders
+            return await _dbContext.CheckVoucherHeaders
                 .Where(cv =>
                     references.Contains(cv.CheckVoucherHeaderNo!) &&
                     cv.Company == company &&
@@ -141,7 +141,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .ToListAsync(cancellationToken);
         }
 
-        private static decimal GetAvailableAdvanceAmount(IEnumerable<FilprideCheckVoucherHeader> advanceHeaders)
+        private static decimal GetAvailableAdvanceAmount(IEnumerable<CheckVoucherHeader> advanceHeaders)
         {
             return advanceHeaders.Sum(advance => Math.Max(0m, advance.CheckAmount - advance.AmountPaid));
         }
@@ -233,7 +233,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        private static decimal GetDetailAccountAmount(IEnumerable<FilprideCheckVoucherDetail> details, string accountNumber, bool isDebit)
+        private static decimal GetDetailAccountAmount(IEnumerable<CheckVoucherDetail> details, string accountNumber, bool isDebit)
         {
             return details
                 .Where(d => !d.IsDisplayEntry && d.AccountNo == accountNumber)
@@ -262,7 +262,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         private async Task<List<SelectListItem>> GetTradeAccountingEntryOptionsAsync(CancellationToken cancellationToken)
         {
-            return (await _unitOfWork.FilprideChartOfAccount
+            return (await _unitOfWork.ChartOfAccount
                     .GetAllAsync(coa => !_reservedTradeAccountNumbers.Any(excludedNumber => coa.AccountNumber!.Contains(excludedNumber)) && !coa.HasChildren, cancellationToken))
                 .Select(s => new SelectListItem
                 {
@@ -390,7 +390,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             viewModel.Suppliers = await _unitOfWork.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
             viewModel.BankAccounts = await _unitOfWork.GetFilprideBankAccountListById(companyClaims, cancellationToken);
-            viewModel.PONo = (await _unitOfWork.FilpridePurchaseOrder
+            viewModel.PONo = (await _unitOfWork.PurchaseOrder
                     .GetAllAsync(
                         po => po.Company == companyClaims && po.SupplierId == viewModel.SupplierId &&
                               po.PostedBy != null, cancellationToken))
@@ -423,7 +423,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     {
                         viewModel.COA = await GetTradeAccountingEntryOptionsAsync(cancellationToken);
 
-                        viewModel.Suppliers = (await _unitOfWork.FilprideSupplier
+                        viewModel.Suppliers = (await _unitOfWork.Supplier
                                 .GetAllAsync(supp => companyClaims == nameof(Filpride) && supp.Category == "Trade", cancellationToken))
                             .Select(sup => new SelectListItem
                             {
@@ -432,7 +432,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                             })
                             .ToList();
 
-                        viewModel.PONo = (await _unitOfWork.FilpridePurchaseOrder
+                        viewModel.PONo = (await _unitOfWork.PurchaseOrder
                                 .GetAllAsync(po => po.Company == companyClaims && po.SupplierId == viewModel.SupplierId && po.PostedBy != null, cancellationToken))
                             .Select(po => new SelectListItem
                             {
@@ -441,7 +441,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                             })
                             .ToList();
 
-                        viewModel.BankAccounts = (await _unitOfWork.FilprideBankAccount
+                        viewModel.BankAccounts = (await _unitOfWork.BankAccount
                                 .GetAllAsync(b => companyClaims == nameof(Filpride), cancellationToken))
                             .Select(ba => new SelectListItem
                             {
@@ -459,7 +459,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get PO --
 
-                var getPurchaseOrder = await _unitOfWork.FilpridePurchaseOrder
+                var getPurchaseOrder = await _unitOfWork.PurchaseOrder
                     .GetAsync(po => viewModel.POSeries!.Contains(po.PurchaseOrderNo), cancellationToken);
 
                 if (getPurchaseOrder == null)
@@ -512,7 +512,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -524,7 +524,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -534,7 +534,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #endregion -- Get bank account
 
-                var cvh = new FilprideCheckVoucherHeader
+                var cvh = new CheckVoucherHeader
                 {
                     Type = viewModel.Type!,
                     CheckVoucherHeaderNo = generateCvNo,
@@ -569,7 +569,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var cvDetails = new List<FilprideCheckVoucherDetail>();
+                var cvDetails = new List<CheckVoucherDetail>();
                 for (var i = 0; i < viewModel.AccountNumber.Length; i++)
                 {
                     var debitAmount = viewModel.Debit[i];
@@ -615,7 +615,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = viewModel.AccountNumber[i],
                             AccountName = viewModel.AccountTitle[i],
@@ -629,23 +629,23 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         });
                 }
 
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 #endregion --CV Details Entry
 
                 #region -- Partial payment of RR's
 
-                var cvTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cvTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.RRs ?? [])
                 {
-                    var getReceivingReport = await _unitOfWork.FilprideReceivingReport.GetAsync(x => x.ReceivingReportId == item.Id, cancellationToken);
+                    var getReceivingReport = await _unitOfWork.ReceivingReport.GetAsync(x => x.ReceivingReportId == item.Id, cancellationToken);
                     if (getReceivingReport != null)
                     {
                         getReceivingReport.AmountPaid += item.Amount;
                         cvh.TaxPercent = getReceivingReport.TaxPercentage;
 
                         cvTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getReceivingReport.ReceivingReportId,
                             DocumentType = "RR",
@@ -666,7 +666,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                 d.AccountNo != _apTradePayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo &&
                                 d.AccountNo != _advancesToSupplierAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -714,7 +714,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         : 0m;
 
                     cvDetails.Add(
-                    new FilprideCheckVoucherDetail
+                    new CheckVoucherDetail
                     {
                         AccountNo = apTradeDetail.AccountNo,
                         AccountName = apTradeDetail.AccountName,
@@ -731,7 +731,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (inputVat != 0)
                     {
                         cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = "101060200",
                             AccountName = "Vat - Input",
@@ -747,11 +747,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     {
                         var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(cvh.TaxPercent)
                             ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{cvh.TaxPercent}'.");
-                        var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                        var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                             .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                             ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                         cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = getWithholdingTaxTitle.AccountNumber!,
                             AccountName = getWithholdingTaxTitle.AccountName,
@@ -766,7 +766,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     var displayCashInBankAmount = Math.Round(cashInBank, 4);
 
                     cvDetails.Add(
-                    new FilprideCheckVoucherDetail
+                    new CheckVoucherDetail
                     {
                         AccountNo = "101010100",
                         AccountName = "Cash in Bank",
@@ -783,7 +783,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (displayAppliedAdvanceAmount > 0)
                     {
                         cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = _advancesToSupplierAccountNo,
                             AccountName = "Advances to Supplier",
@@ -801,7 +801,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 cvDetails.AddRange(manualDisplayEntries);
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 #endregion -- Additional journal entry in details
 
@@ -815,8 +815,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -840,7 +840,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
 
-            var purchaseOrders = await _dbContext.FilpridePurchaseOrders
+            var purchaseOrders = await _dbContext.PurchaseOrders
                 .Include(x => x.ReceivingReports)
                 .Where(po => po.SupplierId == supplierId
                              && po.PostedBy != null
@@ -866,7 +866,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
 
-            var query = _dbContext.FilprideReceivingReports
+            var query = _dbContext.ReceivingReports
                 .Where(rr => rr.Company == companyClaims && !rr.IsPaid
                     && rr.AmountPaid < (
                         rr.PurchaseOrder!.TaxType == SD.TaxType_WithTax
@@ -882,17 +882,17 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (cvId != null)
             {
-                var rrIds = await _dbContext.FilprideCVTradePayments
+                var rrIds = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "RR")
                     .Select(cvp => cvp.DocumentId)
                     .ToListAsync(cancellationToken);
 
-                rrAmountPaidById = await _dbContext.FilprideCVTradePayments
+                rrAmountPaidById = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "RR")
                     .GroupBy(cvp => cvp.DocumentId)
                     .ToDictionaryAsync(g => g.Key, g => g.Sum(x => x.AmountPaid), cancellationToken);
 
-                query = query.Union(_dbContext.FilprideReceivingReports
+                query = query.Union(_dbContext.ReceivingReports
                     .Where(rr => poNumber.Contains(rr.PONo) && rrIds.Contains(rr.ReceivingReportId)));
             }
 
@@ -911,15 +911,15 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .Select(rr =>
                 {
                     var netOfVatAmount = rr.PurchaseOrder?.VatType == SD.VatType_Vatable
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfVat(rr.Amount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfVat(rr.Amount)
                         : rr.Amount;
 
                     var ewtAmount = rr.PurchaseOrder?.TaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, rr.TaxPercentage)
+                        ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, rr.TaxPercentage)
                         : 0.0000m;
 
                     var netOfEwtAmount = rr.PurchaseOrder?.TaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfEwt(rr.Amount, ewtAmount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfEwt(rr.Amount, ewtAmount)
                         : rr.Amount;
 
                     var currentCvPaid = rrAmountPaidById.GetValueOrDefault(rr.ReceivingReportId);
@@ -947,7 +947,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return Json(null);
             }
 
-            var supplier = await _unitOfWork.FilprideSupplier
+            var supplier = await _unitOfWork.Supplier
                 .GetAsync(s => s.SupplierId == supplierId && companyClaims == nameof(Filpride));
 
             if (supplier == null)
@@ -1026,7 +1026,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     MinDate = minDate
                 };
 
-                var existingDetails = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetails = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
@@ -1048,7 +1048,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     })
                     .ToList();
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id && cv.DocumentType == "RR")
                     .ToListAsync(cancellationToken);
 
@@ -1061,7 +1061,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     });
                 }
 
-                model.PONo = _dbContext.FilpridePurchaseOrders
+                model.PONo = _dbContext.PurchaseOrders
                     .Include(x => x.ReceivingReports)
                     .Where(po => po.PostedBy != null
                                  && po.QuantityReceived > 0
@@ -1101,7 +1101,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return BadRequest();
             }
 
-            viewModel.PONo = (await _unitOfWork.FilpridePurchaseOrder
+            viewModel.PONo = (await _unitOfWork.PurchaseOrder
                     .GetAllAsync(p => !p.IsSubPo && p.Company == companyClaims, cancellationToken))
                 .OrderBy(s => s.PurchaseOrderNo)
                 .Select(s => new SelectListItem
@@ -1138,7 +1138,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -1150,7 +1150,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -1222,14 +1222,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var existingDetailsModel = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetailsModel = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
                 _dbContext.RemoveRange(existingDetailsModel);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var details = new List<FilprideCheckVoucherDetail>();
+                var details = new List<CheckVoucherDetail>();
                 for (var i = 0; i < viewModel.AccountTitle.Length; i++)
                 {
                     var debitAmount = viewModel.Debit[i];
@@ -1275,7 +1275,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         subAccountName = supplier.SupplierName;
                     }
 
-                    details.Add(new FilprideCheckVoucherDetail
+                    details.Add(new CheckVoucherDetail
                     {
                         AccountNo = viewModel.AccountNumber[i],
                         AccountName = viewModel.AccountTitle[i],
@@ -1293,13 +1293,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Partial payment of RR's
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == existingHeaderModel.CheckVoucherHeaderId && cv.DocumentType == "RR")
                     .ToListAsync(cancellationToken);
 
                 foreach (var item in getCheckVoucherTradePayment)
                 {
-                    var receivingReport = await _unitOfWork.FilprideReceivingReport
+                    var receivingReport = await _unitOfWork.ReceivingReport
                         .GetAsync(rr => rr.ReceivingReportId == item.DocumentId, cancellationToken);
 
                     if (receivingReport == null)
@@ -1313,10 +1313,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 _dbContext.RemoveRange(getCheckVoucherTradePayment);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var cvTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cvTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.RRs ?? [])
                 {
-                    var getReceivingReport = await _unitOfWork.FilprideReceivingReport
+                    var getReceivingReport = await _unitOfWork.ReceivingReport
                         .GetAsync(rr => rr.ReceivingReportId == item.Id, cancellationToken);
 
                     if (getReceivingReport == null)
@@ -1328,7 +1328,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     existingHeaderModel.TaxPercent = getReceivingReport.TaxPercentage;
 
                     cvTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getReceivingReport.ReceivingReportId,
                             DocumentType = "RR",
@@ -1349,7 +1349,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                 d.AccountNo != _apTradePayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo &&
                                 d.AccountNo != _advancesToSupplierAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -1399,7 +1399,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (existingHeaderModel.CheckVoucherHeaderNo != null)
                     {
                         details.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = apTradeDetail.AccountNo,
                             AccountName = apTradeDetail.AccountName,
@@ -1416,7 +1416,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         if (inputVat != 0)
                         {
                             details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                             {
                                 AccountNo = "101060200",
                                 AccountName = "Vat - Input",
@@ -1432,11 +1432,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         {
                             var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(existingHeaderModel.TaxPercent)
                                 ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{existingHeaderModel.TaxPercent}'.");
-                            var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                            var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                                 .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                                 ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                             details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                             {
                                 AccountNo = getWithholdingTaxTitle.AccountNumber!,
                                 AccountName = getWithholdingTaxTitle.AccountName,
@@ -1451,7 +1451,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         var displayCashInBankAmount = Math.Round(cashInBank, 4);
 
                         details.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = "101010100",
                             AccountName = "Cash in Bank",
@@ -1468,7 +1468,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         if (displayAppliedAdvanceAmount > 0)
                         {
                             details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                             {
                                 AccountNo = _advancesToSupplierAccountNo,
                                 AccountName = "Advances to Supplier",
@@ -1491,7 +1491,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 details.AddRange(manualDisplayEntries);
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(details, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(details, cancellationToken);
 
                 #endregion -- Additional details entry
 
@@ -1505,8 +1505,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -1546,22 +1546,22 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             var companyClaims = await GetCompanyClaimAsync();
 
-            var details = await _dbContext.FilprideCheckVoucherDetails
+            var details = await _dbContext.CheckVoucherDetails
                 .Where(cvd => cvd.CheckVoucherHeaderId == header.CheckVoucherHeaderId)
                 .ToListAsync(cancellationToken);
 
-            var getSupplier = await _unitOfWork.FilprideSupplier
+            var getSupplier = await _unitOfWork.Supplier
                 .GetAsync(s => s.SupplierId == supplierId && companyClaims == nameof(Filpride), cancellationToken);
 
             if (header.CvType == "Supplier")
             {
-                var listOfRrIds = await _dbContext.FilprideCVTradePayments
+                var listOfRrIds = await _dbContext.CvTradePayments
                     .Where(x => x.CheckVoucherId == header.CheckVoucherHeaderId)
                     .Select(x => x.DocumentId)
                     .Distinct()
                     .ToListAsync(cancellationToken);
 
-                var rrList = await _unitOfWork.FilprideReceivingReport
+                var rrList = await _unitOfWork.ReceivingReport
                     .GetAllAsync(x => listOfRrIds.Contains(x.ReceivingReportId) && x.Company == companyClaims, cancellationToken);
 
                 var siArray = rrList
@@ -1592,8 +1592,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             #region --Audit Trail Recording
 
-            FilprideAuditTrail auditTrailBook = new(GetUserFullName(), $"Preview check voucher# {header.CheckVoucherHeaderNo}", "Check Voucher", companyClaims!);
-            await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+            AuditTrail auditTrailBook = new(GetUserFullName(), $"Preview check voucher# {header.CheckVoucherHeaderNo}", "Check Voucher", companyClaims!);
+            await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
             #endregion --Audit Trail Recording
 
@@ -1615,8 +1615,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), $"Printed original copy of check voucher# {cv.CheckVoucherHeaderNo}", "Check Voucher", cv.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), $"Printed original copy of check voucher# {cv.CheckVoucherHeaderNo}", "Check Voucher", cv.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -1627,8 +1627,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrail = new(GetUserFullName(), $"Printed re-printed copy of check voucher# {cv.CheckVoucherHeaderNo}", "Check Voucher", cv.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrail, cancellationToken);
+                AuditTrail auditTrail = new(GetUserFullName(), $"Printed re-printed copy of check voucher# {cv.CheckVoucherHeaderNo}", "Check Voucher", cv.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrail, cancellationToken);
 
                 #endregion --Audit Trail Recording
             }
@@ -1652,7 +1652,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return RedirectToAction(nameof(Print), new { id });
             }
 
-            var modelDetails = await _dbContext.FilprideCheckVoucherDetails
+            var modelDetails = await _dbContext.CheckVoucherDetails
                 .Where(cvd => cvd.CheckVoucherHeaderId == modelHeader.CheckVoucherHeaderId && !cvd.IsDisplayEntry)
                 .ToListAsync(cancellationToken);
 
@@ -1672,7 +1672,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Mark as paid the RR's or DR's
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id)
                     .Include(cv => cv.CV)
                     .ToListAsync(cancellationToken);
@@ -1681,7 +1681,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 {
                     if (item.DocumentType == "RR")
                     {
-                        var receivingReport = await _unitOfWork.FilprideReceivingReport
+                        var receivingReport = await _unitOfWork.ReceivingReport
                             .GetAsync(rr => rr.ReceivingReportId == item.DocumentId, cancellationToken);
 
                         var netAmount = receivingReport!.PurchaseOrder?.TaxType == SD.TaxType_WithTax
@@ -1699,7 +1699,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                     if (item.DocumentType == "DR")
                     {
-                        var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                        var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                             .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
 
                         if (item.CV.CvType == "Commission")
@@ -1745,8 +1745,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(modelHeader.PostedBy!, $"Posted check voucher# {modelHeader.CheckVoucherHeaderNo}", "Check Voucher", modelHeader.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(modelHeader.PostedBy!, $"Posted check voucher# {modelHeader.CheckVoucherHeaderNo}", "Check Voucher", modelHeader.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -1789,7 +1789,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Recalculate payment of RR's or DR's
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id)
                     .Include(cv => cv.CV)
                     .ToListAsync(cancellationToken);
@@ -1798,7 +1798,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 {
                     if (item.DocumentType == "RR")
                     {
-                        var receivingReport = await _unitOfWork.FilprideReceivingReport
+                        var receivingReport = await _unitOfWork.ReceivingReport
                             .GetAsync(rr => rr.ReceivingReportId == item.DocumentId, cancellationToken);
 
                         receivingReport!.IsPaid = false;
@@ -1806,7 +1806,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
                     if (item.DocumentType == "DR")
                     {
-                        var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                        var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                             .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
 
                         if (item.CV.CvType == "Commission")
@@ -1826,8 +1826,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(model.CanceledBy!, $"Canceled check voucher# {model.CheckVoucherHeaderNo}", "Check Voucher", model.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(model.CanceledBy!, $"Canceled check voucher# {model.CheckVoucherHeaderNo}", "Check Voucher", model.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -1869,7 +1869,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Recalculate payment of RR's or DR's
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id)
                     .Include(cv => cv.CV)
                     .ToListAsync(cancellationToken);
@@ -1878,7 +1878,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 {
                     if (item.DocumentType == "RR")
                     {
-                        var receivingReport = await _unitOfWork.FilprideReceivingReport
+                        var receivingReport = await _unitOfWork.ReceivingReport
                             .GetAsync(rr => rr.ReceivingReportId == item.DocumentId, cancellationToken);
 
                         receivingReport!.IsPaid = false;
@@ -1886,7 +1886,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
                     if (item.DocumentType == "DR")
                     {
-                        var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                        var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                             .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
 
                         if (item.CV.CvType == "Commission")
@@ -1913,8 +1913,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(model.VoidedBy!, $"Voided check voucher# {model.CheckVoucherHeaderNo}", "Check Voucher", model.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(model.VoidedBy!, $"Voided check voucher# {model.CheckVoucherHeaderNo}", "Check Voucher", model.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -1960,11 +1960,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 cvHeader.PostedBy = null;
                 cvHeader.Status = nameof(CheckVoucherPaymentStatus.ForPosting);
 
-                await _unitOfWork.FilprideCheckVoucher.RemoveRecords<FilprideGeneralLedgerBook>(gl => gl.Reference == cvHeader.CheckVoucherHeaderNo, cancellationToken);
+                await _unitOfWork.FilprideCheckVoucher.RemoveRecords<GeneralLedgerBook>(gl => gl.Reference == cvHeader.CheckVoucherHeaderNo, cancellationToken);
 
                 #region -- Revert the tagging of RR's or DR's
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id)
                     .Include(cv => cv.CV)
                     .ToListAsync(cancellationToken);
@@ -1973,14 +1973,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 {
                     if (item.DocumentType == "RR")
                     {
-                        var receivingReport = await _unitOfWork.FilprideReceivingReport
+                        var receivingReport = await _unitOfWork.ReceivingReport
                             .GetAsync(rr => rr.ReceivingReportId == item.DocumentId, cancellationToken);
 
                         receivingReport!.IsPaid = false;
                     }
                     if (item.DocumentType == "DR")
                     {
-                        var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                        var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                             .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
                         if (item.CV.CvType == "Commission")
                         {
@@ -2004,8 +2004,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(_userManager.GetUserName(User)!, $"Unposted check voucher# {cvHeader.CheckVoucherHeaderNo}", "Check Voucher", cvHeader.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(_userManager.GetUserName(User)!, $"Unposted check voucher# {cvHeader.CheckVoucherHeaderNo}", "Check Voucher", cvHeader.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -2237,7 +2237,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     row++;
                 }
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => recordIds.Contains(cv.CheckVoucherId) && cv.DocumentType == "RR")
                     .ToListAsync();
 
@@ -2312,7 +2312,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 var cvPaymentId = checkVoucherPayment.Select(cvn => cvn.CheckVoucherHeaderId).ToList();
-                var getCheckVoucherMultiplePayment = await _dbContext.FilprideMultipleCheckVoucherPayments
+                var getCheckVoucherMultiplePayment = await _dbContext.MultipleCheckVoucherPayments
                     .Where(cv => cvPaymentId.Contains(cv.CheckVoucherHeaderPaymentId))
                     .ToListAsync();
 
@@ -2331,7 +2331,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Check Voucher Details Export (Trade and Invoicing) --
 
-                var getCvDetails = await _dbContext.FilprideCheckVoucherDetails
+                var getCvDetails = await _dbContext.CheckVoucherDetails
                     .Where(cvd => cvNos.Contains(cvd.TransactionNo))
                     .OrderBy(cvd => cvd.CheckVoucherHeaderId)
                     .ToListAsync();
@@ -2361,7 +2361,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Check Voucher Details Export (Payment) --
 
-                var getCvPaymentDetails = await _dbContext.FilprideCheckVoucherDetails
+                var getCvPaymentDetails = await _dbContext.CheckVoucherDetails
                     .Where(cvd => checkVoucherPayment.Select(cvh => cvh.CheckVoucherHeaderNo).Contains(cvd.TransactionNo))
                     .OrderBy(cvd => cvd.CheckVoucherHeaderId)
                     .ToListAsync();
@@ -2391,13 +2391,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var selectedIds = selectedList.Select(item => item.CheckVoucherHeaderId).ToList();
 
-                var cvTradePaymentList = await _dbContext.FilprideCVTradePayments
+                var cvTradePaymentList = await _dbContext.CvTradePayments
                     .Where(p => selectedIds.Contains(p.CheckVoucherId))
                     .ToListAsync();
 
                 var rrIds = cvTradePaymentList.Select(item => item.DocumentId).ToList();
 
-                var getReceivingReport = (await _unitOfWork.FilprideReceivingReport
+                var getReceivingReport = (await _unitOfWork.ReceivingReport
                     .GetAllAsync(rr => rrIds.Contains(rr.ReceivingReportId))).ToList();
 
                 var rrRow = 2;
@@ -2443,7 +2443,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Purchase Order Export --
 
-                var getPurchaseOrder = (await _unitOfWork.FilpridePurchaseOrder
+                var getPurchaseOrder = (await _unitOfWork.PurchaseOrder
                         .GetAllAsync(po => getReceivingReport.Select(item => item.POId).Contains(po.PurchaseOrderId)))
                     .OrderBy(po => po.PurchaseOrderNo)
                     .ToList();
@@ -2462,7 +2462,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     worksheet3.Cells[poRow, 1].Value = item.Date.ToString("yyyy-MM-dd");
                     worksheet3.Cells[poRow, 2].Value = item.Terms;
                     worksheet3.Cells[poRow, 3].Value = item.Quantity;
-                    worksheet3.Cells[poRow, 4].Value = await _unitOfWork.FilpridePurchaseOrder.GetPurchaseOrderCost(item.PurchaseOrderId);
+                    worksheet3.Cells[poRow, 4].Value = await _unitOfWork.PurchaseOrder.GetPurchaseOrderCost(item.PurchaseOrderId);
                     worksheet3.Cells[poRow, 5].Value = item.Amount;
                     worksheet3.Cells[poRow, 6].Value = item.FinalPrice;
                     worksheet3.Cells[poRow, 7].Value = item.QuantityReceived;
@@ -2588,7 +2588,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get DR --
 
-                var getDeliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                var getDeliveryReceipt = await _unitOfWork.DeliveryReceipt
                     .GetAsync(
                         dr => dr.DeliveryReceiptId == viewModel.DRs.Select(d => d.Id).FirstOrDefault() &&
                               dr.Company == companyClaims, cancellationToken);
@@ -2608,7 +2608,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -2620,7 +2620,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -2630,7 +2630,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #endregion -- Get bank account
 
-                var cvh = new FilprideCheckVoucherHeader
+                var cvh = new CheckVoucherHeader
                 {
                     CheckVoucherHeaderNo = generateCvNo,
                     Date = viewModel.TransactionDate,
@@ -2665,7 +2665,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var cvDetails = new List<FilprideCheckVoucherDetail>();
+                var cvDetails = new List<CheckVoucherDetail>();
                 for (var i = 0; i < viewModel.AccountNumber.Length; i++)
                 {
                     if (viewModel.Debit[i] == 0 && viewModel.Credit[i] == 0)
@@ -2691,7 +2691,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = viewModel.AccountNumber[i],
                             AccountName = viewModel.AccountTitle[i],
@@ -2705,13 +2705,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         });
                 }
 
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 var manualDisplayEntries = cvDetails
                     .Where(d => !d.IsDisplayEntry &&
                                 d.AccountNo != _commissionPayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -2758,7 +2758,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         : 0m;
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                     {
                         AccountNo = commissionDetail.AccountNo,
                         AccountName = commissionDetail.AccountName,
@@ -2775,7 +2775,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (inputVat != 0)
                     {
                         cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = "101060200",
                             AccountName = "Vat - Input",
@@ -2791,11 +2791,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     {
                         var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(cvh.TaxPercent)
                             ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{cvh.TaxPercent}'.");
-                        var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                        var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                             .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                             ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                         cvDetails.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = getWithholdingTaxTitle.AccountNumber!,
                             AccountName = getWithholdingTaxTitle.AccountName,
@@ -2810,7 +2810,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     cvDetails.AddRange(manualDisplayEntries);
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                     {
                         AccountNo = _cashInBankAccountNo,
                         AccountName = "Cash in Bank",
@@ -2824,16 +2824,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         IsDisplayEntry = true
                     });
                 }
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 #endregion --CV Details Entry
 
                 #region -- Partial payment of DR's
 
-                var cVTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cVTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.DRs)
                 {
-                    var getDeliveryReceipts = await _unitOfWork.FilprideDeliveryReceipt
+                    var getDeliveryReceipts = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.Id, cancellationToken);
 
                     if (getDeliveryReceipts == null)
@@ -2844,7 +2844,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     getDeliveryReceipts.CommissionAmountPaid += item.Amount;
 
                     cVTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getDeliveryReceipts.DeliveryReceiptId,
                             DocumentType = "DR",
@@ -2867,8 +2867,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -2955,7 +2955,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get DR --
 
-                var getDeliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                var getDeliveryReceipt = await _unitOfWork.DeliveryReceipt
                     .GetAsync(dr => dr.DeliveryReceiptId == viewModel.DRs.Select(d => d.Id).FirstOrDefault()
                                     && dr.Company == companyClaims, cancellationToken);
 
@@ -2974,7 +2974,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -2986,7 +2986,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -2996,7 +2996,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #endregion -- Get bank account
 
-                var cvh = new FilprideCheckVoucherHeader
+                var cvh = new CheckVoucherHeader
                 {
                     CheckVoucherHeaderNo = generateCvNo,
                     Date = viewModel.TransactionDate,
@@ -3032,7 +3032,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var cvDetails = new List<FilprideCheckVoucherDetail>();
+                var cvDetails = new List<CheckVoucherDetail>();
                 for (var i = 0; i < viewModel.AccountNumber.Length; i++)
                 {
                     if (viewModel.Debit[i] == 0 && viewModel.Credit[i] == 0)
@@ -3058,7 +3058,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = viewModel.AccountNumber[i],
                             AccountName = viewModel.AccountTitle[i],
@@ -3072,13 +3072,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         });
                 }
 
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 var manualDisplayEntries = cvDetails
                     .Where(d => !d.IsDisplayEntry &&
                                 d.AccountNo != _haulingPayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -3125,7 +3125,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         : 0m;
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                     {
                         AccountNo = haulingDetail.AccountNo,
                         AccountName = haulingDetail.AccountName,
@@ -3142,7 +3142,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (inputVat != 0)
                     {
                         cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = "101060200",
                             AccountName = "Vat - Input",
@@ -3158,11 +3158,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     {
                         var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(cvh.TaxPercent)
                             ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{cvh.TaxPercent}'.");
-                        var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                        var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                             .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                             ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                         cvDetails.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = getWithholdingTaxTitle.AccountNumber!,
                             AccountName = getWithholdingTaxTitle.AccountName,
@@ -3177,7 +3177,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     cvDetails.AddRange(manualDisplayEntries);
 
                     cvDetails.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                     {
                         AccountNo = _cashInBankAccountNo,
                         AccountName = "Cash in Bank",
@@ -3191,16 +3191,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         IsDisplayEntry = true
                     });
                 }
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(cvDetails, cancellationToken);
 
                 #endregion --CV Details Entry
 
                 #region -- Partial payment of DR's
 
-                var cVTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cVTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.DRs)
                 {
-                    var getDeliveryReceipts = await _unitOfWork.FilprideDeliveryReceipt
+                    var getDeliveryReceipts = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.Id, cancellationToken);
 
                     if (getDeliveryReceipts == null)
@@ -3211,7 +3211,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     getDeliveryReceipts.FreightAmountPaid += item.Amount;
 
                     cVTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getDeliveryReceipts.DeliveryReceiptId,
                             DocumentType = "DR",
@@ -3234,8 +3234,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(cvh.CreatedBy!, $"Created new check voucher# {cvh.CheckVoucherHeaderNo}", "Check Voucher", cvh.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -3259,7 +3259,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
 
-            var query = _dbContext.FilprideDeliveryReceipts
+            var query = _dbContext.DeliveryReceipts
                 .Where(dr => companyClaims != null
                             && dr.Company == companyClaims
                             && commissioneeId == dr.CommissioneeId
@@ -3277,16 +3277,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (cvId != null)
             {
-                var drIds = await _dbContext.FilprideCVTradePayments
+                var drIds = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .Select(cvp => cvp.DocumentId)
                     .ToListAsync(cancellationToken);
 
-                drAmountPaid = await _dbContext.FilprideCVTradePayments
+                drAmountPaid = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .SumAsync(cvp => cvp.AmountPaid, cancellationToken);
 
-                query = query.Union(_dbContext.FilprideDeliveryReceipts
+                query = query.Union(_dbContext.DeliveryReceipts
                     .Where(dr => commissioneeId == dr.CommissioneeId && drIds.Contains(dr.DeliveryReceiptId)));
             }
 
@@ -3297,7 +3297,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .ToListAsync(cancellationToken);
 
             var drPaymentLookup = cvId != null
-                ? (await _dbContext.FilprideCVTradePayments
+                ? (await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .ToListAsync(cancellationToken))
                     .GroupBy(cvp => cvp.DocumentId)
@@ -3314,15 +3314,15 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .Select(dr =>
                 {
                     var netOfVatAmount = dr.CustomerOrderSlip!.CommissioneeVatType == SD.VatType_Vatable
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfVat(dr.CommissionAmount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfVat(dr.CommissionAmount)
                         : dr.CommissionAmount;
 
                     var ewtAmount = dr.CustomerOrderSlip!.CommissioneeTaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, dr.Commissionee?.WithholdingTaxPercent ?? 0m)
+                        ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, dr.Commissionee?.WithholdingTaxPercent ?? 0m)
                         : 0m;
 
                     var netOfEwtAmount = dr.CustomerOrderSlip!.CommissioneeTaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfEwt(dr.CommissionAmount, ewtAmount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfEwt(dr.CommissionAmount, ewtAmount)
                         : dr.CommissionAmount;
 
                     var thisDrAmountPaid = drPaymentLookup.TryGetValue(dr.DeliveryReceiptId, out var paid) ? paid : 0m;
@@ -3345,7 +3345,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
 
-            var query = _dbContext.FilprideDeliveryReceipts
+            var query = _dbContext.DeliveryReceipts
                 .Where(dr => dr.Company == companyClaims
                             && dr.HaulerId == haulerId
                             && !dr.IsFreightPaid
@@ -3362,16 +3362,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (cvId != null)
             {
-                var drIds = await _dbContext.FilprideCVTradePayments
+                var drIds = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .Select(cvp => cvp.DocumentId)
                     .ToListAsync(cancellationToken);
 
-                drAmountPaid = await _dbContext.FilprideCVTradePayments
+                drAmountPaid = await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .SumAsync(cvp => cvp.AmountPaid, cancellationToken);
 
-                query = query.Union(_dbContext.FilprideDeliveryReceipts
+                query = query.Union(_dbContext.DeliveryReceipts
                     .Where(dr => dr.HaulerId == haulerId && drIds.Contains(dr.DeliveryReceiptId)));
             }
 
@@ -3386,7 +3386,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var drPaymentLookup = cvId != null
-                ? (await _dbContext.FilprideCVTradePayments
+                ? (await _dbContext.CvTradePayments
                     .Where(cvp => cvp.CheckVoucherId == cvId && cvp.DocumentType == "DR")
                     .ToListAsync(cancellationToken))
                     .GroupBy(cvp => cvp.DocumentId)
@@ -3398,15 +3398,15 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .Select(dr =>
                 {
                     var netOfVatAmount = dr.HaulerVatType == SD.VatType_Vatable
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfVat(dr.FreightAmount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfVat(dr.FreightAmount)
                         : dr.FreightAmount;
 
                     var ewtAmount = dr.HaulerTaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, dr.Hauler?.WithholdingTaxPercent ?? 0m)
+                        ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, dr.Hauler?.WithholdingTaxPercent ?? 0m)
                         : 0.0000m;
 
                     var netOfEwtAmount = dr.HaulerTaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeNetOfEwt(dr.FreightAmount, ewtAmount)
+                        ? _unitOfWork.ReceivingReport.ComputeNetOfEwt(dr.FreightAmount, ewtAmount)
                         : dr.FreightAmount;
 
                     var thisDrAmountPaid = drPaymentLookup.TryGetValue(dr.DeliveryReceiptId, out var paid) ? paid : 0m;
@@ -3480,14 +3480,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     MinDate = minDate
                 };
 
-                var existingDetails = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetails = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
                 model.DefaultPayableAmount = GetDetailAccountAmount(existingDetails, _commissionPayableAccountNo, isDebit: true);
                 model.CashInBankAmount = GetDetailAccountAmount(existingDetails, _cashInBankAccountNo, isDebit: false);
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id && cv.DocumentType == "DR")
                     .ToListAsync(cancellationToken);
 
@@ -3563,7 +3563,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -3575,7 +3575,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -3612,14 +3612,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var existingDetailsModel = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetailsModel = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
                 _dbContext.RemoveRange(existingDetailsModel);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var details = new List<FilprideCheckVoucherDetail>();
+                var details = new List<CheckVoucherDetail>();
 
                 for (var i = 0; i < viewModel.AccountNumber.Length; i++)
                 {
@@ -3646,7 +3646,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     details.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = viewModel.AccountNumber[i],
                             AccountName = viewModel.AccountTitle[i],
@@ -3660,7 +3660,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         });
                 }
 
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(details, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(details, cancellationToken);
 
                 #endregion --CV Details Entry
 
@@ -3670,7 +3670,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Where(d => !d.IsDisplayEntry &&
                                 d.AccountNo != _commissionPayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -3718,7 +3718,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (existingHeaderModel.CheckVoucherHeaderNo != null)
                     {
                         details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = commissionDetail.AccountNo,
                             AccountName = commissionDetail.AccountName,
@@ -3735,7 +3735,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         if (inputVat != 0)
                         {
                             details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                             {
                                 AccountNo = "101060200",
                                 AccountName = "Vat - Input",
@@ -3751,11 +3751,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         {
                             var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(existingHeaderModel.TaxPercent)
                                 ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{existingHeaderModel.TaxPercent}'.");
-                            var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                            var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                                 .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                                 ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                             details.Add(
-                                new FilprideCheckVoucherDetail
+                                new CheckVoucherDetail
                             {
                                 AccountNo = getWithholdingTaxTitle.AccountNumber!,
                                 AccountName = getWithholdingTaxTitle.AccountName,
@@ -3770,7 +3770,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         details.AddRange(manualDisplayEntries);
 
                         details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = _cashInBankAccountNo,
                             AccountName = "Cash in Bank",
@@ -3789,19 +3789,19 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         throw new Exception("Check voucher header no. not found!");
                     }
                 }
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(details, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(details, cancellationToken);
 
                 #endregion -- Additional details entry
 
                 #region -- Partial payment
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == existingHeaderModel.CheckVoucherHeaderId && cv.DocumentType == "DR")
                     .ToListAsync(cancellationToken);
 
                 foreach (var item in getCheckVoucherTradePayment)
                 {
-                    var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                    var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
 
                     if (deliveryReceipt == null)
@@ -3815,10 +3815,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 _dbContext.RemoveRange(getCheckVoucherTradePayment);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var cvTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cvTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.DRs)
                 {
-                    var getDeliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                    var getDeliveryReceipt = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.Id, cancellationToken);
 
                     if (getDeliveryReceipt == null)
@@ -3829,7 +3829,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     getDeliveryReceipt.CommissionAmountPaid += item.Amount;
 
                     cvTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getDeliveryReceipt.DeliveryReceiptId,
                             DocumentType = "DR",
@@ -3853,7 +3853,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
+                AuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
                 await _dbContext.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
@@ -3930,14 +3930,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     MinDate = minDate
                 };
 
-                var existingDetails = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetails = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
                 model.DefaultPayableAmount = GetDetailAccountAmount(existingDetails, _haulingPayableAccountNo, isDebit: true);
                 model.CashInBankAmount = GetDetailAccountAmount(existingDetails, _cashInBankAccountNo, isDebit: false);
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == id && cv.DocumentType == "DR")
                     .ToListAsync(cancellationToken);
 
@@ -4013,7 +4013,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get Supplier
 
-                var supplier = await _unitOfWork.FilprideSupplier
+                var supplier = await _unitOfWork.Supplier
                     .GetAsync(po => po.SupplierId == viewModel.SupplierId, cancellationToken);
 
                 if (supplier == null)
@@ -4025,7 +4025,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Get bank account
 
-                var bank = await _unitOfWork.FilprideBankAccount
+                var bank = await _unitOfWork.BankAccount
                     .GetAsync(b => b.BankAccountId == viewModel.BankId, cancellationToken);
 
                 if (bank == null)
@@ -4062,14 +4062,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --CV Details Entry
 
-                var existingDetailsModel = await _dbContext.FilprideCheckVoucherDetails
+                var existingDetailsModel = await _dbContext.CheckVoucherDetails
                     .Where(d => d.CheckVoucherHeaderId == existingHeaderModel.CheckVoucherHeaderId)
                     .ToListAsync(cancellationToken);
 
                 _dbContext.RemoveRange(existingDetailsModel);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var details = new List<FilprideCheckVoucherDetail>();
+                var details = new List<CheckVoucherDetail>();
 
                 for (var i = 0; i < viewModel.AccountNumber.Length; i++)
                 {
@@ -4096,7 +4096,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
 
                     details.Add(
-                        new FilprideCheckVoucherDetail
+                        new CheckVoucherDetail
                         {
                             AccountNo = viewModel.AccountNumber[i],
                             AccountName = viewModel.AccountTitle[i],
@@ -4110,7 +4110,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         });
                 }
 
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(details, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(details, cancellationToken);
 
                 #endregion --CV Details Entry
 
@@ -4120,7 +4120,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Where(d => !d.IsDisplayEntry &&
                                 d.AccountNo != _haulingPayableAccountNo &&
                                 d.AccountNo != _cashInBankAccountNo)
-                    .Select(d => new FilprideCheckVoucherDetail
+                    .Select(d => new CheckVoucherDetail
                     {
                         AccountNo = d.AccountNo,
                         AccountName = d.AccountName,
@@ -4169,7 +4169,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     if (existingHeaderModel.CheckVoucherHeaderNo != null)
                     {
                         details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = haulingDetail.AccountNo,
                             AccountName = haulingDetail.AccountName,
@@ -4186,7 +4186,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         if (inputVat != 0)
                         {
                             details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                             {
                                 AccountNo = "101060200",
                                 AccountName = "Vat - Input",
@@ -4202,11 +4202,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         {
                             var withholdingTaxAccountNo = WithholdingTaxHelper.GetAccountNumberByPercent(existingHeaderModel.TaxPercent)
                                 ?? throw new ArgumentException($"No EWT account mapping found for tax percentage '{existingHeaderModel.TaxPercent}'.");
-                            var getWithholdingTaxTitle = await _dbContext.FilprideChartOfAccounts
+                            var getWithholdingTaxTitle = await _dbContext.ChartOfAccounts
                                 .FirstOrDefaultAsync(x => x.AccountNumber == withholdingTaxAccountNo, cancellationToken)
                                 ?? throw new ArgumentException($"Account title '{withholdingTaxAccountNo}' not found.");
                             details.Add(
-                                new FilprideCheckVoucherDetail
+                                new CheckVoucherDetail
                             {
                                 AccountNo = getWithholdingTaxTitle.AccountNumber!,
                                 AccountName = getWithholdingTaxTitle.AccountName,
@@ -4221,7 +4221,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         details.AddRange(manualDisplayEntries);
 
                         details.Add(
-                            new FilprideCheckVoucherDetail
+                            new CheckVoucherDetail
                         {
                             AccountNo = _cashInBankAccountNo,
                             AccountName = "Cash in Bank",
@@ -4240,19 +4240,19 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         throw new Exception("Check voucher header no. not found!");
                     }
                 }
-                await _dbContext.FilprideCheckVoucherDetails.AddRangeAsync(details, cancellationToken);
+                await _dbContext.CheckVoucherDetails.AddRangeAsync(details, cancellationToken);
 
                 #endregion -- Additional details entry
 
                 #region -- Partial payment
 
-                var getCheckVoucherTradePayment = await _dbContext.FilprideCVTradePayments
+                var getCheckVoucherTradePayment = await _dbContext.CvTradePayments
                     .Where(cv => cv.CheckVoucherId == existingHeaderModel.CheckVoucherHeaderId && cv.DocumentType == "DR")
                     .ToListAsync(cancellationToken);
 
                 foreach (var item in getCheckVoucherTradePayment)
                 {
-                    var deliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                    var deliveryReceipt = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.DocumentId, cancellationToken);
 
                     if (deliveryReceipt == null)
@@ -4266,10 +4266,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 _dbContext.RemoveRange(getCheckVoucherTradePayment);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
-                var cvTradePaymentModel = new List<FilprideCVTradePayment>();
+                var cvTradePaymentModel = new List<CVTradePayment>();
                 foreach (var item in viewModel.DRs)
                 {
-                    var getDeliveryReceipt = await _unitOfWork.FilprideDeliveryReceipt
+                    var getDeliveryReceipt = await _unitOfWork.DeliveryReceipt
                         .GetAsync(dr => dr.DeliveryReceiptId == item.Id, cancellationToken);
 
                     if (getDeliveryReceipt == null)
@@ -4280,7 +4280,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     getDeliveryReceipt.FreightAmountPaid += item.Amount;
 
                     cvTradePaymentModel.Add(
-                        new FilprideCVTradePayment
+                        new CVTradePayment
                         {
                             DocumentId = getDeliveryReceipt.DeliveryReceiptId,
                             DocumentType = "DR",
@@ -4304,8 +4304,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingHeaderModel.EditedBy!, $"Edited check voucher# {existingHeaderModel.CheckVoucherHeaderNo}", "Check Voucher", existingHeaderModel.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -4336,7 +4336,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             foreach (var poNumber in poNumbers)
             {
-                var po = await _unitOfWork.FilpridePurchaseOrder
+                var po = await _unitOfWork.PurchaseOrder
                     .GetAsync(p => p.PurchaseOrderNo == poNumber && p.Company == companyClaims, cancellationToken);
 
                 if (po == null || (po.Terms != SD.Terms_Cod && po.Terms != SD.Terms_Prepaid))
@@ -4372,7 +4372,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         private async Task<(string CVNo, decimal Amount)> CalculateAdvanceAmount(int supplierId, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
-            var advancesVouchers = await _dbContext.FilprideCheckVoucherDetails
+            var advancesVouchers = await _dbContext.CheckVoucherDetails
                 .Include(cv => cv.CheckVoucherHeader)
                 .Where(cv =>
                     cv.CheckVoucherHeader!.SupplierId == supplierId &&
@@ -4486,7 +4486,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalRecords = checkVoucherHeaders.Count();
 
                 // Apply pagination - HANDLE -1 FOR "ALL"
-                IEnumerable<FilprideCheckVoucherHeader> pagedCheckVoucherHeaders;
+                IEnumerable<CheckVoucherHeader> pagedCheckVoucherHeaders;
 
                 if (parameters.Length == -1)
                 {
@@ -4554,7 +4554,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return BadRequest();
                 }
 
-                var cvs = await _dbContext.FilprideCheckVoucherHeaders
+                var cvs = await _dbContext.CheckVoucherHeaders
                     .Include(x => x.Details)
                     .Where(x =>
                         x.Company == companyClaims &&
@@ -4573,13 +4573,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Distinct()
                     .ToList();
 
-                var existingGlEntries = await _dbContext.FilprideGeneralLedgerBooks
+                var existingGlEntries = await _dbContext.GeneralLedgerBooks
                     .Where(x => x.Company == companyClaims && cvReferences.Contains(x.Reference))
                     .ToListAsync(cancellationToken);
 
                 if (existingGlEntries.Count != 0)
                 {
-                    _dbContext.FilprideGeneralLedgerBooks.RemoveRange(existingGlEntries);
+                    _dbContext.GeneralLedgerBooks.RemoveRange(existingGlEntries);
                     await _dbContext.SaveChangesAsync(cancellationToken);
                 }
 
@@ -4602,3 +4602,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

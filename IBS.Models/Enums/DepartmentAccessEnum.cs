@@ -23,7 +23,7 @@ namespace IBS.Models.Enums
 
     #region Module Actions
 
-    public enum CustomerOrderSlip
+    public enum CustomerOrderSlipAction
     {
         CustomerOrderSlipPreview,
         CustomerOrderSlipEdit,
@@ -46,7 +46,7 @@ namespace IBS.Models.Enums
         DeliveryReceiptsMarkAsDelivered
     }
 
-    public enum SalesInvoice
+    public enum SalesInvoiceAction
     {
         SalesInvoiceCancel,
         SalesInvoiceCreate,
@@ -56,7 +56,7 @@ namespace IBS.Models.Enums
         SalesInvoiceUnpost
     }
 
-    public enum ServiceInvoice
+    public enum ServiceInvoiceAction
     {
         ServiceInvoiceCancel,
         ServiceInvoiceCreate,
@@ -66,7 +66,7 @@ namespace IBS.Models.Enums
         ServiceInvoiceUnpost
     }
 
-    public enum CollectionReceipt
+    public enum CollectionReceiptAction
     {
         CollectionReceiptApplyClearingDate,
         CollectionReceiptCancel,
@@ -85,7 +85,7 @@ namespace IBS.Models.Enums
         CollectionReceiptUnpost
     }
 
-    public enum DebitMemo
+    public enum DebitMemoAction
     {
         DebitMemoCancel,
         DebitMemoCreate,
@@ -95,7 +95,7 @@ namespace IBS.Models.Enums
         DebitMemoUnpost
     }
 
-    public enum CreditMemo
+    public enum CreditMemoAction
     {
         CreditMemoCancel,
         CreditMemoCreate,
@@ -105,7 +105,7 @@ namespace IBS.Models.Enums
         CreditMemoUnpost
     }
 
-    public enum AuthorityToLoad
+    public enum AuthorityToLoadAction
     {
         AuthorityToLoadCreate,
         AuthorityToLoadEdit,
@@ -113,7 +113,7 @@ namespace IBS.Models.Enums
         AuthorityToLoadUpdateValidUntil
     }
 
-    public enum PurchaseOrder
+    public enum PurchaseOrderAction
     {
         PurchaseOrderCancel,
         PurchaseOrderClose,
@@ -126,7 +126,7 @@ namespace IBS.Models.Enums
         PurchaseOrderUpdateSupplierSalesOrderNo
     }
 
-    public enum ReceivingReport
+    public enum ReceivingReportAction
     {
         ReceivingReportCancel,
         ReceivingReportCreate,
@@ -206,7 +206,7 @@ namespace IBS.Models.Enums
         DisbursementUpdateDcrDate
     }
 
-    public enum ProvisionalReceipt
+    public enum ProvisionalReceiptAction
     {
         ProvisionalReceiptApplyClearingDate,
         ProvisionalReceiptCancel,

@@ -4,8 +4,8 @@ using IBS.Models.Filpride.MasterFile;
 
 namespace IBS.DataAccess.Repository.Filpride.IRepository
 {
-    public interface ICustomerBranchRepository : IRepository<FilprideCustomerBranch>
+    public interface ICustomerBranchRepository : IRepository<CustomerBranch>
     {
-        Task UpdateAsync(FilprideCustomerBranch model, CancellationToken cancellationToken);
+        Task UpdateAsync(CustomerBranch model, CancellationToken cancellationToken);
     }
 }

@@ -274,23 +274,23 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             List<string> moduleAccessList = moduleName switch
             {
-                nameof(CustomerOrderSlip) => Enum.GetNames<CustomerOrderSlip>().ToList(),
+                nameof(AccessModule.CustomerOrderSlip) => Enum.GetNames<CustomerOrderSlipAction>().ToList(),
                 nameof(DeliveryReceipts) => Enum.GetNames<DeliveryReceipts>().ToList(),
-                nameof(SalesInvoice) => Enum.GetNames<SalesInvoice>().ToList(),
-                nameof(ServiceInvoice) => Enum.GetNames<ServiceInvoice>().ToList(),
-                nameof(CollectionReceipt) => Enum.GetNames<CollectionReceipt>().ToList(),
-                nameof(DebitMemo) => Enum.GetNames<DebitMemo>().ToList(),
-                nameof(CreditMemo) => Enum.GetNames<CreditMemo>().ToList(),
-                nameof(AuthorityToLoad) => Enum.GetNames<AuthorityToLoad>().ToList(),
-                nameof(PurchaseOrder) => Enum.GetNames<PurchaseOrder>().ToList(),
-                nameof(ReceivingReport) => Enum.GetNames<ReceivingReport>().ToList(),
+                nameof(AccessModule.SalesInvoice) => Enum.GetNames<SalesInvoiceAction>().ToList(),
+                nameof(AccessModule.ServiceInvoice) => Enum.GetNames<ServiceInvoiceAction>().ToList(),
+                nameof(AccessModule.CollectionReceipt) => Enum.GetNames<CollectionReceiptAction>().ToList(),
+                nameof(AccessModule.DebitMemo) => Enum.GetNames<DebitMemoAction>().ToList(),
+                nameof(AccessModule.CreditMemo) => Enum.GetNames<CreditMemoAction>().ToList(),
+                nameof(AccessModule.AuthorityToLoad) => Enum.GetNames<AuthorityToLoadAction>().ToList(),
+                nameof(AccessModule.PurchaseOrder) => Enum.GetNames<PurchaseOrderAction>().ToList(),
+                nameof(AccessModule.ReceivingReport) => Enum.GetNames<ReceivingReportAction>().ToList(),
                 nameof(CheckVoucherTrade) => Enum.GetNames<CheckVoucherTrade>().ToList(),
                 nameof(CheckVoucherNonTradeInvoice) => Enum.GetNames<CheckVoucherNonTradeInvoice>().ToList(),
                 nameof(CheckVoucherNonTradePayrollInvoice) => Enum.GetNames<CheckVoucherNonTradePayrollInvoice>().ToList(),
                 nameof(CheckVoucherNonTradePayment) => Enum.GetNames<CheckVoucherNonTradePayment>().ToList(),
                 nameof(JournalVoucher) => Enum.GetNames<JournalVoucher>().ToList(),
                 nameof(Disbursement) => Enum.GetNames<Disbursement>().ToList(),
-                nameof(ProvisionalReceipt) => Enum.GetNames<ProvisionalReceipt>().ToList(),
+                nameof(AccessModule.ProvisionalReceipt) => Enum.GetNames<ProvisionalReceiptAction>().ToList(),
                 _ => new List<string>()
             };
 

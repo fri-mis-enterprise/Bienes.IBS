@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class GeneralLedgerRepository : Repository<FilprideGeneralLedgerBook>, IGeneralLedgerRepository
+    public class GeneralLedgerRepository : Repository<GeneralLedgerBook>, IGeneralLedgerRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -17,7 +17,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task ReverseEntries(string? reference, CancellationToken cancellationToken = default)
         {
-            var existingGlEntries = await _db.FilprideGeneralLedgerBooks
+            var existingGlEntries = await _db.GeneralLedgerBooks
                 .Where(gl => gl.Reference == reference)
                 .ToListAsync(cancellationToken);
 
@@ -28,7 +28,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
             var reversingDate = DateTimeHelper.GetCurrentPhilippineTime();
 
-            var reversingEntries = existingGlEntries.Select(gl => new FilprideGeneralLedgerBook
+            var reversingEntries = existingGlEntries.Select(gl => new GeneralLedgerBook
             {
                 Date = DateOnly.FromDateTime(reversingDate),
                 Reference = gl.Reference,
@@ -48,8 +48,9 @@ namespace IBS.DataAccess.Repository.Filpride
                 SubAccountType = gl.SubAccountType,
             }).ToList();
 
-            await _db.FilprideGeneralLedgerBooks.AddRangeAsync(reversingEntries, cancellationToken);
+            await _db.GeneralLedgerBooks.AddRangeAsync(reversingEntries, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
         }
     }
 }
+

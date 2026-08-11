@@ -51,7 +51,7 @@ namespace IBS.Services
 
         private async Task CosExpiration(DateOnly today)
         {
-            var cosList = await _dbContext.FilprideCustomerOrderSlips
+            var cosList = await _dbContext.CustomerOrderSlips
                 .Where(cos => cos.ExpirationDate <= today
                               && cos.Status != nameof(CosStatus.Completed)
                               && cos.Status != nameof(CosStatus.Expired)
@@ -81,7 +81,7 @@ namespace IBS.Services
 
         private async Task LockPlacement(DateTime today)
         {
-            var placements = await _dbContext.BienesPlacements
+            var placements = await _dbContext.Placements
                 .Where(p => p.LockedDate <= today && !p.IsLocked)
                 .ToListAsync();
 
@@ -100,3 +100,4 @@ namespace IBS.Services
         }
     }
 }
+

@@ -5,14 +5,14 @@ using IBS.Models.Filpride.Integrated;
 
 namespace IBS.DataAccess.Repository.Filpride.IRepository
 {
-    public interface IInventoryRepository : IRepository<FilprideInventory>
+    public interface IInventoryRepository : IRepository<Inventory>
     {
-        Task AddPurchaseToInventoryAsync(FilprideReceivingReport receivingReport, CancellationToken cancellationToken = default);
+        Task AddPurchaseToInventoryAsync(ReceivingReport receivingReport, CancellationToken cancellationToken = default);
 
-        Task AddSalesToInventoryAsync(FilprideDeliveryReceipt deliveryReceipt, CancellationToken cancellationToken = default);
+        Task AddSalesToInventoryAsync(DeliveryReceipt deliveryReceipt, CancellationToken cancellationToken = default);
 
-        Task VoidInventory(FilprideInventory model, CancellationToken cancellationToken = default);
+        Task VoidInventory(Inventory model, CancellationToken cancellationToken = default);
 
-        Task ReCalculateInventoryAsync(List<FilprideInventory> inventories, CancellationToken cancellationToken = default);
+        Task ReCalculateInventoryAsync(List<Inventory> inventories, CancellationToken cancellationToken = default);
     }
 }

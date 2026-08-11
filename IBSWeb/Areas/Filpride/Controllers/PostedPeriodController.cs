@@ -129,14 +129,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var modulesPosted = string.Join(", ", postedPeriods.Select(p => p.Module));
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     $"Posted the following modules: {modulesPosted} for {request.Month}/{request.Year}",
                     "Posted Period",
                     request.Company!
                 );
 
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -169,14 +169,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     $"Posted the following modules: {postedPeriod.Module} for {postedPeriod.Month}/{postedPeriod.Year}",
                     "Posted Period",
                     postedPeriod.Company
                 );
 
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
                 _dbContext.PostedPeriods.Remove(postedPeriod);
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -221,3 +221,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

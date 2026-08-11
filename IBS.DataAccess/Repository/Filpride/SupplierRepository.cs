@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class SupplierRepository : Repository<FilprideSupplier>, ISupplierRepository
+    public class SupplierRepository : Repository<Supplier>, ISupplierRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -21,7 +21,7 @@ namespace IBS.DataAccess.Repository.Filpride
         public async Task<string> GenerateCodeAsync(CancellationToken cancellationToken = default)
         {
             var lastSupplier = await _db
-                .FilprideSuppliers
+                .Suppliers
                 .OrderByDescending(s => s.SupplierId)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -42,7 +42,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<bool> IsSupplierExistAsync(string supplierName, string category, string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .AnyAsync(s => s.Company == company && s.SupplierName == supplierName && s.Category == category, cancellationToken);
         }
 
@@ -51,7 +51,7 @@ namespace IBS.DataAccess.Repository.Filpride
             if (tin == "000-000-000-00000")
                 return false;
 
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .AnyAsync(s =>
                     s.Company == company &&
                     s.SupplierTin == tin &&
@@ -76,9 +76,9 @@ namespace IBS.DataAccess.Repository.Filpride
             return fileSavePath;
         }
 
-        public async Task UpdateAsync(FilprideSupplier model, CancellationToken cancellationToken = default)
+        public async Task UpdateAsync(Supplier model, CancellationToken cancellationToken = default)
         {
-            var existingSupplier = await _db.FilprideSuppliers
+            var existingSupplier = await _db.Suppliers
                 .FirstOrDefaultAsync(x => x.SupplierId == model.SupplierId, cancellationToken)
                                    ?? throw new InvalidOperationException($"Supplier with id '{model.SupplierId}' not found.");
 
@@ -124,7 +124,7 @@ namespace IBS.DataAccess.Repository.Filpride
 
         public async Task<List<SelectListItem>> GetFilprideTradeSupplierListAsyncById(string company, CancellationToken cancellationToken = default)
         {
-            return await _db.FilprideSuppliers
+            return await _db.Suppliers
                 .OrderBy(s => s.SupplierCode)
                 .Where(s => s.IsActive && s.Category == "Trade" && company == nameof(Filpride))
                 .Select(s => new SelectListItem
@@ -136,3 +136,4 @@ namespace IBS.DataAccess.Repository.Filpride
         }
     }
 }
+

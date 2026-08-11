@@ -3,7 +3,7 @@ using IBS.Models.Filpride;
 
 namespace IBS.DataAccess.Repository.Filpride.IRepository
 {
-    public interface IFreightRepository : IRepository<FilprideFreight>
+    public interface IFreightRepository : IRepository<Freight>
     {
     }
 }

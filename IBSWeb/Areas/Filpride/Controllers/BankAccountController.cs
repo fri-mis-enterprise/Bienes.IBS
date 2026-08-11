@@ -56,7 +56,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var banks = await _unitOfWork.FilprideBankAccount
+                var banks = await _unitOfWork.BankAccount
                 .GetAllAsync(null, cancellationToken);
 
                 return view == nameof(DynamicView.BankAccount) ? View("ExportIndex") : View(banks);
@@ -77,7 +77,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FilprideBankAccount model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(BankAccount model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -89,13 +89,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                if (await _unitOfWork.FilprideBankAccount.IsBankAccountNoExist(model.AccountNo, cancellationToken))
+                if (await _unitOfWork.BankAccount.IsBankAccountNoExist(model.AccountNo, cancellationToken))
                 {
                     ModelState.AddModelError("AccountNo", "Bank account no already exist!");
                     return View(model);
                 }
 
-                if (await _unitOfWork.FilprideBankAccount.IsBankAccountNameExist(model.AccountName, cancellationToken))
+                if (await _unitOfWork.BankAccount.IsBankAccountNameExist(model.AccountName, cancellationToken))
                 {
                     ModelState.AddModelError("AccountName", "Bank account name already exist!");
                     return View(model);
@@ -112,13 +112,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 model.CreatedBy = GetUserFullName();
 
-                await _unitOfWork.FilprideBankAccount.AddAsync(model, cancellationToken);
+                await _unitOfWork.BankAccount.AddAsync(model, cancellationToken);
                 await _unitOfWork.SaveAsync(cancellationToken);
 
                 #region -- Audit Trail Recordings --
 
-                FilprideAuditTrail auditTrailBook = new(model.CreatedBy!, $"Create new bank {model.Bank} {model.AccountName} {model.AccountNo}", "Bank Account", model.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(model.CreatedBy!, $"Create new bank {model.Bank} {model.AccountName} {model.AccountNo}", "Bank Account", model.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recordings --
 
@@ -140,7 +140,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var query = _unitOfWork.FilprideBankAccount
+                var query = _unitOfWork.BankAccount
                     .GetAllQuery();
 
                 var totalRecords = await query.CountAsync(cancellationToken);
@@ -197,16 +197,16 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
-            var existingModel = await _unitOfWork.FilprideBankAccount
+            var existingModel = await _unitOfWork.BankAccount
                 .GetAsync(b => b.BankAccountId == id, cancellationToken);
             return View(existingModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(FilprideBankAccount model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(BankAccount model, CancellationToken cancellationToken)
         {
-            var existingModel = await _unitOfWork.FilprideBankAccount
+            var existingModel = await _unitOfWork.BankAccount
                 .GetAsync(b => b.BankAccountId == model.BankAccountId, cancellationToken);
 
             if (existingModel == null)
@@ -226,8 +226,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 #region -- Audit Trail Recordings --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), $"Edited bank {existingModel.Bank} {existingModel.AccountName} {existingModel.AccountNo} => {model.Bank} {model.AccountName} {model.AccountNo}", "Bank Account", existingModel.Company);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), $"Edited bank {existingModel.Bank} {existingModel.AccountName} {existingModel.AccountNo} => {model.Bank} {model.AccountName} {model.AccountNo}", "Bank Account", existingModel.Company);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail Recordings --
 
@@ -257,7 +257,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var bankAccounts = (await _unitOfWork.FilprideBankAccount
+                var bankAccounts = (await _unitOfWork.BankAccount
                     .GetAllAsync(null, cancellationToken))
                     .Select(x => new
                     {
@@ -298,7 +298,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var recordIds = selectedRecord.Split(',').Select(int.Parse).ToList();
 
             // Retrieve the selected invoices from the database
-            var selectedList = await _dbContext.FilprideBankAccounts
+            var selectedList = await _dbContext.BankAccounts
                 .Where(bank => recordIds.Contains(bank.BankAccountId))
                 .OrderBy(bank => bank.BankAccountId)
                 .ToListAsync();
@@ -346,7 +346,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public IActionResult GetAllBankAccountIds()
         {
-            var bankIds = _dbContext.FilprideBankAccounts
+            var bankIds = _dbContext.BankAccounts
                 .Select(b => b.BankAccountId)
                 .ToList();
 
@@ -354,3 +354,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

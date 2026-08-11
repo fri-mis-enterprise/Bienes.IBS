@@ -4,9 +4,9 @@ using IBS.Models.Filpride.AccountsReceivable;
 
 namespace IBS.DataAccess.Repository.Filpride.IRepository
 {
-    public interface IDebitMemoRepository : IRepository<FilprideDebitMemo>
+    public interface IDebitMemoRepository : IRepository<DebitMemo>
     {
         Task<string> GenerateCodeAsync(string company, string type, CancellationToken cancellationToken = default);
-        Task PostAsync(FilprideDebitMemo model, CancellationToken cancellationToken = default);
+        Task PostAsync(DebitMemo model, CancellationToken cancellationToken = default);
     }
 }

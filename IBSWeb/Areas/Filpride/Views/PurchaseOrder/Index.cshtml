@@ -1,5 +1,5 @@
-﻿@using IBS.Models.Enums
-@model IEnumerable<FilpridePurchaseOrder>
+@using IBS.Models.Enums
+@model IEnumerable<PurchaseOrder>
 @{
     ViewData["Title"] = "Purchase Order";
 }
@@ -239,7 +239,7 @@
                     return $.extend({}, d, {
                         __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
 
-                        // NEW PARAMETER FOR DATE — this goes to controller
+                        // NEW PARAMETER FOR DATE � this goes to controller
                         filterDate: filterValue
                     });
                 },

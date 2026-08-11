@@ -27,7 +27,7 @@ namespace IBS.Models.Filpride.ViewModels
         public int? SupplierId { get; set; }
 
         [ForeignKey(nameof(CVId))]
-        public FilprideCheckVoucherHeader? CheckVoucherHeader { get; set; }
+        public CheckVoucherHeader? CheckVoucherHeader { get; set; }
 
         [NotMapped]
         public List<SelectListItem>? CheckVoucherHeaders { get; set; }

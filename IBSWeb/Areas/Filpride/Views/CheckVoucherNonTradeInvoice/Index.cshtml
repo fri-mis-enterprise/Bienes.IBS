@@ -1,5 +1,5 @@
-﻿@using IBS.Models.Enums
-@model IEnumerable<FilprideCheckVoucherDetail>
+@using IBS.Models.Enums
+@model IEnumerable<CheckVoucherDetail>
 @{
     ViewData["Title"] = "Check Voucher Non-Trade Invoice";
 }
@@ -184,7 +184,7 @@
                         return $.extend({}, d, {
                             __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
 
-                            // NEW PARAMETER FOR DATE — this goes to controller
+                            // NEW PARAMETER FOR DATE � this goes to controller
                             filterDate: filterValue
                         });
                     },

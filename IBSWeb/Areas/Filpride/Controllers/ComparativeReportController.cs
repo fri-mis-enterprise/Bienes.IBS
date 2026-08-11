@@ -116,12 +116,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var document = GenerateAdjustmentReport(adjustments, GetReportTitle(category), monthDate, isCombinedReport);
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     $"Generate {category.ToLower()} comparative adjustment report quest pdf",
                     "Comparative Report",
                     companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 var pdfBytes = document.GeneratePdf();
                 return File(pdfBytes, "application/pdf");

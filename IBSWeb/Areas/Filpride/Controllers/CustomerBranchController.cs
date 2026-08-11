@@ -46,7 +46,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
 
-            var model = new FilprideCustomerBranch
+            var model = new CustomerBranch
             {
                 CustomerSelectList = await _unitOfWork.GetFilprideCustomerListAsyncById(companyClaims!, cancellationToken)
             };
@@ -56,7 +56,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FilprideCustomerBranch model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(CustomerBranch model, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
 
@@ -72,7 +72,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var customer = await _unitOfWork.FilprideCustomer
+                var customer = await _unitOfWork.Customer
                     .GetAsync(x => x.CustomerId == model.CustomerId, cancellationToken);
 
                 if (customer == null)
@@ -81,13 +81,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
 
                 customer.HasBranch = true;
-                await _unitOfWork.FilprideCustomerBranch.AddAsync(model, cancellationToken);
+                await _unitOfWork.CustomerBranch.AddAsync(model, cancellationToken);
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Created Customer Branch #{model.Id}", "Customer Branch", companyClaims! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -114,7 +114,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return NotFound();
             }
 
-            var branch = await _unitOfWork.FilprideCustomerBranch.GetAsync(b => b.Id == id, cancellationToken);
+            var branch = await _unitOfWork.CustomerBranch.GetAsync(b => b.Id == id, cancellationToken);
 
             if (branch == null)
             {
@@ -127,7 +127,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(FilprideCustomerBranch model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(CustomerBranch model, CancellationToken cancellationToken)
         {
             var companyClaims = await GetCompanyClaimAsync();
 
@@ -143,13 +143,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                await _unitOfWork.FilprideCustomerBranch.UpdateAsync(model, cancellationToken);
+                await _unitOfWork.CustomerBranch.UpdateAsync(model, cancellationToken);
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new (GetUserFullName(),
+                AuditTrail auditTrailBook = new (GetUserFullName(),
                     $"Edited Customer Branch #{model.Id}", "Customer Branch", companyClaims! );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -186,7 +186,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var query = _unitOfWork.FilprideCustomerBranch
+                var query = _unitOfWork.CustomerBranch
                     .GetAllQuery();
 
                 var totalRecords = await query.CountAsync(cancellationToken);
@@ -250,7 +250,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             try
             {
-                var customer = await _unitOfWork.FilprideCustomer
+                var customer = await _unitOfWork.Customer
                     .GetAsync(c => c.CustomerId == customerId, cancellationToken);
 
                 if (customer == null)

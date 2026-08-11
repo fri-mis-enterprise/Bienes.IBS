@@ -72,7 +72,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             viewModel.Products = await _unitOfWork.GetProductListAsyncById(cancellationToken);
 
-            viewModel.PO = await _dbContext.FilpridePurchaseOrders
+            viewModel.PO = await _dbContext.PurchaseOrders
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Where(p => p.Company == companyClaims)
                 .Select(p => new SelectListItem
@@ -103,7 +103,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var inventoryRecords = await _dbContext.FilprideInventories
+                var inventoryRecords = await _dbContext.Inventories
                     .AsNoTracking()
                     .Include(i => i.Product)
                     .Include(i => i.PurchaseOrder)
@@ -330,8 +330,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate inventory report quest pdf", "Inventory Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate inventory report quest pdf", "Inventory Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -365,7 +365,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var inventoryRecords = await _dbContext.FilprideInventories
+                var inventoryRecords = await _dbContext.Inventories
                     .AsNoTracking()
                     .Include(i => i.Product)
                     .Include(i => i.PurchaseOrder)
@@ -787,8 +787,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate inventory report excel", "Inventory Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate inventory report excel", "Inventory Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion
 
@@ -835,7 +835,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
 
             var companyClaims = await GetCompanyClaimAsync();
-            var purchaseOrders = await _dbContext.FilpridePurchaseOrders
+            var purchaseOrders = await _dbContext.PurchaseOrders
                 .OrderBy(p => p.PurchaseOrderNo)
                 .Where(p => p.Company == companyClaims && p.ProductId == productId)
                 .Select(p => new SelectListItem
@@ -849,3 +849,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

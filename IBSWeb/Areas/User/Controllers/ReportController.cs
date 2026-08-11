@@ -22,7 +22,7 @@ namespace IBSWeb.Areas.User.Controllers
         {
             try
             {
-                var summary = _unitOfWork.FilprideChartOfAccount
+                var summary = _unitOfWork.ChartOfAccount
                 .GetSummaryReportView(cancellationToken);
 
                 return View(summary.OrderBy(x => x.AccountNumber));

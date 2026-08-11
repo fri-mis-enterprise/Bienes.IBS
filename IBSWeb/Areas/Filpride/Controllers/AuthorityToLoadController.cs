@@ -95,7 +95,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 var companyClaims = await GetCompanyClaimAsync();
 
-                var atlList = _unitOfWork.FilprideAuthorityToLoad
+                var atlList = _unitOfWork.AuthorityToLoad
                     .GetAllQuery(x => x.Company == companyClaims);
 
                 var totalRecords = await atlList.CountAsync(cancellationToken);
@@ -172,7 +172,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadCreate))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -185,7 +185,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             BookATLViewModel viewModel = new()
             {
-                SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken),
+                SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken),
                 LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken),
                 Date = DateOnly.FromDateTime(DateTimeHelper.GetCurrentPhilippineTime()),
                 CurrentUser = _userManager.GetUserName(User)
@@ -194,7 +194,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadCreate))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BookATLViewModel viewModel, CancellationToken cancellationToken)
@@ -208,7 +208,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (!ModelState.IsValid)
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = "The submitted information is invalid.";
                 return View(viewModel);
@@ -217,7 +217,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var supplierAtlValidationMessage = ValidateSupplierAtlReferences(viewModel);
             if (supplierAtlValidationMessage != null)
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = supplierAtlValidationMessage;
                 return View(viewModel);
@@ -225,7 +225,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (!viewModel.SelectedCosDetails.Any())
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = "Please select at least one COS.";
                 return View(viewModel);
@@ -237,7 +237,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 var firstCosId = viewModel.SelectedCosDetails.FirstOrDefault()?.CosId;
 
-                var cosRecord = await _unitOfWork.FilprideCustomerOrderSlip
+                var cosRecord = await _unitOfWork.CustomerOrderSlip
                     .GetAsync(x => x.CustomerOrderSlipId == firstCosId, cancellationToken);
 
                 if (cosRecord == null)
@@ -245,9 +245,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return BadRequest();
                 }
 
-                FilprideAuthorityToLoad model = new()
+                AuthorityToLoad model = new()
                 {
-                    AuthorityToLoadNo = await _unitOfWork.FilprideAuthorityToLoad.GenerateAtlNo(companyClaims, cancellationToken),
+                    AuthorityToLoadNo = await _unitOfWork.AuthorityToLoad.GenerateAtlNo(companyClaims, cancellationToken),
                     CustomerOrderSlipId = cosRecord.CustomerOrderSlipId,
                     LoadPortId = cosRecord.PickUpPointId ?? 0,
                     Depot = cosRecord.PickUpPoint!.Depot,
@@ -261,14 +261,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     Company = companyClaims
                 };
 
-                await _unitOfWork.FilprideAuthorityToLoad.AddAsync(model, cancellationToken);
+                await _unitOfWork.AuthorityToLoad.AddAsync(model, cancellationToken);
 
-                var bookDetails = new List<FilprideBookAtlDetail>();
+                var bookDetails = new List<BookAtlDetail>();
 
                 foreach (var details in viewModel.SelectedCosDetails)
                 {
                     // Get all appointed suppliers for this COS in a single query
-                    var appointedSuppliers = await _dbContext.FilprideCOSAppointedSuppliers
+                    var appointedSuppliers = await _dbContext.CosAppointedSuppliers
                         .Include(c => c.CustomerOrderSlip)
                         .Include(c => c.Supplier)
                         .Where(c => c.CustomerOrderSlipId == details.CosId)
@@ -284,7 +284,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     appointedSupplier.UnreservedQuantity -= details.Volume;
 
                     // Add new book details
-                    bookDetails.Add(new FilprideBookAtlDetail
+                    bookDetails.Add(new BookAtlDetail
                     {
                         AuthorityToLoadId = model.AuthorityToLoadId,
                         CustomerOrderSlipId = appointedSupplier.CustomerOrderSlipId,
@@ -304,7 +304,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     appointedSupplier.CustomerOrderSlip!.Status = nameof(CosStatus.ForApprovalOfOM);
                 }
 
-                var selectedSupplierNames = await _dbContext.FilprideSuppliers
+                var selectedSupplierNames = await _dbContext.Suppliers
                     .Where(s => viewModel.SupplierIds.Contains(s.SupplierId))
                     .OrderBy(s => s.SupplierName)
                     .Select(s => s.SupplierName)
@@ -317,10 +317,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     _ => "Multiple Suppliers"
                 };
 
-                await _dbContext.FilprideBookAtlDetails.AddRangeAsync(bookDetails, cancellationToken);
+                await _dbContext.BookAtlDetails.AddRangeAsync(bookDetails, cancellationToken);
 
-                FilprideAuditTrail auditTrailBook = new(model.CreatedBy, $"Create new atl# {model.AuthorityToLoadNo}", "Authority To Load", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(model.CreatedBy, $"Create new atl# {model.AuthorityToLoadNo}", "Authority To Load", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 TempData["success"] = $"ATL# {model.AuthorityToLoadNo} booked successfully.";
                 await transaction.CommitAsync(cancellationToken);
@@ -330,7 +330,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 TempData["error"] = ex.Message;
                 _logger.LogError(ex, "Failed to book ATL. Error: {ErrorMessage}, Stack: {StackTrace}. Created by: {UserName}",
                     ex.Message, ex.StackTrace, _userManager.GetUserName(User));
@@ -338,7 +338,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadPreview))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadPreview))]
         [HttpGet]
         public async Task<IActionResult> Print(int? id, CancellationToken cancellationToken)
         {
@@ -349,7 +349,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var existingRecord = await _unitOfWork.FilprideAuthorityToLoad
+                var existingRecord = await _unitOfWork.AuthorityToLoad
                 .GetAsync(atl => atl.AuthorityToLoadId == id, cancellationToken);
 
                 if (existingRecord == null)
@@ -360,8 +360,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region --Audit Trail Recording
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), $"Preview authority to load# {existingRecord.AuthorityToLoadNo}", "Authority to Load", companyClaims!);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), $"Preview authority to load# {existingRecord.AuthorityToLoadNo}", "Authority to Load", companyClaims!);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion --Audit Trail Recording
 
@@ -376,10 +376,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadPreview))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadPreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
-            var atl = await _unitOfWork.FilprideAuthorityToLoad
+            var atl = await _unitOfWork.AuthorityToLoad
                 .GetAsync(x => x.AuthorityToLoadId == id, cancellationToken);
 
             if (atl == null)
@@ -389,8 +389,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             #region --Audit Trail Recording
 
-            FilprideAuditTrail auditTrail = new(GetUserFullName(), $"Printed copy of authority to load# {atl.AuthorityToLoadNo}", "Authority to Load", atl.Company);
-            await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrail, cancellationToken);
+            AuditTrail auditTrail = new(GetUserFullName(), $"Printed copy of authority to load# {atl.AuthorityToLoadNo}", "Authority to Load", atl.Company);
+            await _unitOfWork.AuditTrail.AddAsync(auditTrail, cancellationToken);
 
             #endregion --Audit Trail Recording
 
@@ -410,7 +410,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .Distinct()
                 .ToList();
 
-            var cosList = await _dbContext.FilprideCOSAppointedSuppliers
+            var cosList = await _dbContext.CosAppointedSuppliers
                 .Include(a => a.CustomerOrderSlip)
                 .Include(a => a.PurchaseOrder)
                 .Include(a => a.Supplier)
@@ -452,7 +452,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .ToList();
 
             // Get the COS IDs and appointed IDs that are currently in this ATL with their quantities
-            var existingBookDetails = await _dbContext.FilprideBookAtlDetails
+            var existingBookDetails = await _dbContext.BookAtlDetails
                 .Where(b => b.AuthorityToLoadId == atlId)
                 .Select(b => new
                 {
@@ -462,7 +462,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 })
                 .ToListAsync();
 
-            var cosList = await _dbContext.FilprideCOSAppointedSuppliers
+            var cosList = await _dbContext.CosAppointedSuppliers
                 .Include(a => a.CustomerOrderSlip)
                 .Include(a => a.PurchaseOrder)
                 .Include(a => a.Supplier)
@@ -516,7 +516,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var companyClaims = await GetCompanyClaimAsync();
             // Query your database to get hauler details for the COS
-            var existingCos = await _unitOfWork.FilprideCustomerOrderSlip
+            var existingCos = await _unitOfWork.CustomerOrderSlip
                 .GetAsync(c => c.CustomerOrderSlipId == cosId && c.Company == companyClaims);
 
             if (existingCos == null)
@@ -536,7 +536,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return Json(haulerDetails);
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadUpdateValidUntil))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadUpdateValidUntil))]
         [HttpPost]
         public async Task<IActionResult> UpdateValidityDate(int id, DateOnly newValidUntil, CancellationToken cancellationToken)
         {
@@ -551,7 +551,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var existingAtl = await _unitOfWork.FilprideAuthorityToLoad
+                var existingAtl = await _unitOfWork.AuthorityToLoad
                     .GetAsync(atl => atl.AuthorityToLoadId == id, cancellationToken);
 
                 if (existingAtl == null)
@@ -561,8 +561,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 existingAtl.ValidUntil = newValidUntil;
 
-                FilprideAuditTrail auditTrailBook = new(existingAtl.CreatedBy, $"Update validity date of atl# {existingAtl.AuthorityToLoadNo}", "Authority To Load", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(existingAtl.CreatedBy, $"Update validity date of atl# {existingAtl.AuthorityToLoadNo}", "Authority To Load", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
 
@@ -577,7 +577,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadEdit))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int? id, CancellationToken cancellationToken)
         {
@@ -593,7 +593,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 return BadRequest();
             }
 
-            var atl = await _dbContext.FilprideAuthorityToLoads
+            var atl = await _dbContext.AuthorityToLoads
                 .Include(a => a.Details)
                 .ThenInclude(b => b.CustomerOrderSlip)
                 .ThenInclude(c => c!.AppointedSuppliers)
@@ -624,7 +624,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 .Select(d => d.AppointedId!.Value)
                 .ToList();
 
-            var supplierIds = await _dbContext.FilprideCOSAppointedSuppliers
+            var supplierIds = await _dbContext.CosAppointedSuppliers
                 .Where(x => appointedIds.Contains(x.SequenceId))
                 .Select(x => x.SupplierId)
                 .Distinct()
@@ -648,7 +648,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 SupplierIds = supplierIds,
                 SupplierAtlReferences = supplierAtlReferences,
                 SelectedCosDetails = selectedCosDetails,
-                SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken),
+                SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken),
                 LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken),
                 CurrentUser = _userManager.GetUserName(User)
             };
@@ -656,7 +656,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
-        [Authorize(Policy = nameof(AuthorityToLoad.AuthorityToLoadEdit))]
+        [Authorize(Policy = nameof(AuthorityToLoadAction.AuthorityToLoadEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(BookATLViewModel viewModel, CancellationToken cancellationToken)
@@ -670,7 +670,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (!ModelState.IsValid)
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = "The submitted information is invalid.";
                 return View(viewModel);
@@ -679,7 +679,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             var supplierAtlValidationMessage = ValidateSupplierAtlReferences(viewModel);
             if (supplierAtlValidationMessage != null)
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = supplierAtlValidationMessage;
                 return View(viewModel);
@@ -687,7 +687,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             if (!viewModel.SelectedCosDetails.Any())
             {
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 viewModel.LoadPorts = await _unitOfWork.GetDistinctFilpridePickupPointListById(companyClaims, cancellationToken);
                 TempData["warning"] = "Please select at least one COS.";
                 return View(viewModel);
@@ -697,7 +697,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var atl = await _dbContext.FilprideAuthorityToLoads
+                var atl = await _dbContext.AuthorityToLoads
                     .Include(a => a.Details)
                     .ThenInclude(b => b.CustomerOrderSlip)
                     .ThenInclude(c => c!.AppointedSuppliers)
@@ -718,7 +718,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 foreach (var oldDetail in atl.Details)
                 {
-                    var appointedSupplier = await _dbContext.FilprideCOSAppointedSuppliers
+                    var appointedSupplier = await _dbContext.CosAppointedSuppliers
                         .Include(c => c.CustomerOrderSlip)
                         .FirstOrDefaultAsync(x => x.CustomerOrderSlipId == oldDetail.CustomerOrderSlipId
                             && x.SequenceId == oldDetail.AppointedId, cancellationToken);
@@ -730,11 +730,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     }
                 }
 
-                _dbContext.FilprideBookAtlDetails.RemoveRange(atl.Details);
+                _dbContext.BookAtlDetails.RemoveRange(atl.Details);
 
                 var firstCosId = viewModel.SelectedCosDetails.FirstOrDefault()?.CosId;
 
-                var cosRecord = await _unitOfWork.FilprideCustomerOrderSlip
+                var cosRecord = await _unitOfWork.CustomerOrderSlip
                     .GetAsync(x => x.CustomerOrderSlipId == firstCosId, cancellationToken);
 
                 if (cosRecord == null)
@@ -751,11 +751,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 atl.SupplierId = viewModel.SupplierIds.First();
                 viewModel.CurrentUser = GetUserFullName();
 
-                var bookDetails = new List<FilprideBookAtlDetail>();
+                var bookDetails = new List<BookAtlDetail>();
 
                 foreach (var details in viewModel.SelectedCosDetails)
                 {
-                    var appointedSuppliers = await _dbContext.FilprideCOSAppointedSuppliers
+                    var appointedSuppliers = await _dbContext.CosAppointedSuppliers
                         .Include(c => c.CustomerOrderSlip)
                         .Include(c => c.Supplier)
                         .Where(c => c.CustomerOrderSlipId == details.CosId)
@@ -770,7 +770,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                     appointedSupplier.UnreservedQuantity -= details.Volume;
 
-                    bookDetails.Add(new FilprideBookAtlDetail
+                    bookDetails.Add(new BookAtlDetail
                     {
                         AuthorityToLoadId = atl.AuthorityToLoadId,
                         CustomerOrderSlipId = appointedSupplier.CustomerOrderSlipId,
@@ -790,7 +790,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     appointedSupplier.CustomerOrderSlip!.Status = nameof(CosStatus.ForApprovalOfOM);
                 }
 
-                var selectedSupplierNames = await _dbContext.FilprideSuppliers
+                var selectedSupplierNames = await _dbContext.Suppliers
                     .Where(s => viewModel.SupplierIds.Contains(s.SupplierId))
                     .OrderBy(s => s.SupplierName)
                     .Select(s => s.SupplierName)
@@ -803,10 +803,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     _ => "Multiple Suppliers"
                 };
 
-                await _dbContext.FilprideBookAtlDetails.AddRangeAsync(bookDetails, cancellationToken);
+                await _dbContext.BookAtlDetails.AddRangeAsync(bookDetails, cancellationToken);
 
-                FilprideAuditTrail auditTrailBook = new(viewModel.CurrentUser, $"Edited atl# {atl.AuthorityToLoadNo}", "Authority To Load", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(viewModel.CurrentUser, $"Edited atl# {atl.AuthorityToLoadNo}", "Authority To Load", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 TempData["success"] = $"ATL# {atl.AuthorityToLoadNo} updated successfully.";
                 await transaction.CommitAsync(cancellationToken);
@@ -816,7 +816,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                viewModel.SupplierList = await _unitOfWork.FilprideSupplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
+                viewModel.SupplierList = await _unitOfWork.Supplier.GetFilprideTradeSupplierListAsyncById(companyClaims, cancellationToken);
                 TempData["error"] = ex.Message;
                 _logger.LogError(ex, "Failed to update ATL. Error: {ErrorMessage}, Stack: {StackTrace}. Edited by: {UserName}",
                     ex.Message, ex.StackTrace, _userManager.GetUserName(User));
@@ -825,3 +825,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

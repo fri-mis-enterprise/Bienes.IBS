@@ -72,14 +72,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 await _monthlyClosureService.CloseAsync(monthDate, companyClaim, User.Identity!.Name!, cancellationToken);
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     $"Close the book for the month of {monthDate:MMM yyyy}",
                     "Monthly Period",
                     companyClaim
                 );
 
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -110,14 +110,14 @@ namespace IBSWeb.Areas.Filpride.Controllers
             {
                 await _monthlyClosureService.OpenAsync(monthDate, companyClaim, User.Identity!.Name!, cancellationToken);
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     $"Open the book for the month of {monthDate:MMM yyyy}",
                     "Monthly Period",
                     companyClaim
                 );
 
-                await _dbContext.FilprideAuditTrails.AddAsync(auditTrailBook, cancellationToken);
+                await _dbContext.AuditTrails.AddAsync(auditTrailBook, cancellationToken);
 
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -134,3 +134,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         }
     }
 }
+

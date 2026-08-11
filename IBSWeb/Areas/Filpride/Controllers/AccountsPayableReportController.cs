@@ -335,8 +335,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate cleared disbursement report quest pdf", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate cleared disbursement report quest pdf", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -432,7 +432,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var row = 8;
                 var currencyFormat = "#,##0.00";
 
-                var coaLookup = await _dbContext.FilprideChartOfAccounts
+                var coaLookup = await _dbContext.ChartOfAccounts
                     .AsNoTracking()
                     .Include(coa => coa.ParentAccount)
                         .ThenInclude(a => a!.ParentAccount)
@@ -490,8 +490,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate cleared disbursement report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate cleared disbursement report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -536,7 +536,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var statusFilter = NormalizeStatusFilter(model.StatusFilter);
 
                 var nonTradeInvoiceReport =
-                    await _dbContext.FilprideCheckVoucherDetails
+                    await _dbContext.CheckVoucherDetails
                         .AsNoTracking()
                         .Where(cvd => cvd.CheckVoucherHeader!.Company == companyClaims
                                       && cvd.CheckVoucherHeader.CvType == nameof(CVType.Invoicing)
@@ -556,7 +556,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Select(x => x.TransactionNo)
                     .ToList();
 
-                var payments = await _dbContext.FilprideCheckVoucherHeaders
+                var payments = await _dbContext.CheckVoucherHeaders
                     .AsNoTracking()
                     .Where(x =>
                         x.PostedBy != null &&
@@ -733,8 +733,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate Non-Trade Invoice report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate Non-Trade Invoice report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -779,7 +779,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var statusFilter = NormalizeStatusFilter(model.StatusFilter);
 
-                var cvTradeHeaderReport = await _dbContext.FilprideCheckVoucherHeaders
+                var cvTradeHeaderReport = await _dbContext.CheckVoucherHeaders
                         .AsNoTracking()
                         .Where(cvh =>
                             cvh.Company == companyClaims &&
@@ -797,15 +797,15 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         .ToListAsync(cancellationToken);
 
                 var cvTradeHeaderIds = cvTradeHeaderReport.Select(cvh => cvh.CheckVoucherHeaderId).ToList();
-                var cvTradePayments = await _dbContext.FilprideCVTradePayments.Where(cvp => cvTradeHeaderIds.Contains(cvp.CheckVoucherId)).ToListAsync(cancellationToken);
+                var cvTradePayments = await _dbContext.CvTradePayments.Where(cvp => cvTradeHeaderIds.Contains(cvp.CheckVoucherId)).ToListAsync(cancellationToken);
 
                 var supplierIds = cvTradeHeaderReport.Where(cvh => cvh.Category == "Trade" && cvh.CvType == "Supplier").Select(cvh => cvh.CheckVoucherHeaderId).ToList();
                 var receivingReportIds = cvTradePayments.Where(cvp => supplierIds.Contains(cvp.CheckVoucherId)).Select(cvp => cvp.DocumentId).ToList();
-                var receivingReports = await _unitOfWork.FilprideReceivingReport.GetAllAsync(dr => receivingReportIds.Contains(dr.ReceivingReportId), cancellationToken);
+                var receivingReports = await _unitOfWork.ReceivingReport.GetAllAsync(dr => receivingReportIds.Contains(dr.ReceivingReportId), cancellationToken);
 
                 var notSupplierIds = cvTradeHeaderReport.Where(cvh => cvh.Category == "Trade" && cvh.CvType != "Supplier").Select(cvh => cvh.CheckVoucherHeaderId).ToList();
                 var deliveryReceiptIds = cvTradePayments.Where(cvp => notSupplierIds.Contains(cvp.CheckVoucherId)).Select(cvp => cvp.DocumentId).ToList();
-                var deliveryReceipts = await _unitOfWork.FilprideDeliveryReceipt.GetAllAsync(dr => deliveryReceiptIds.Contains(dr.DeliveryReceiptId), cancellationToken);
+                var deliveryReceipts = await _unitOfWork.DeliveryReceipt.GetAllAsync(dr => deliveryReceiptIds.Contains(dr.DeliveryReceiptId), cancellationToken);
 
                 if (cvTradeHeaderReport.Count == 0)
                 {
@@ -1009,8 +1009,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate Cv Disbursement report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate Cv Disbursement report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -1187,8 +1187,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase order report quest pdf", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase order report quest pdf", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -1333,8 +1333,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase order report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase order report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -1730,8 +1730,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase report quest pdf", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase report quest pdf", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -1913,7 +1913,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Distinct()
                     .ToList();
 
-                var atls = await _dbContext.FilprideAuthorityToLoads
+                var atls = await _dbContext.AuthorityToLoads
                     .Where(x => atlNos.Contains(x.AuthorityToLoadNo))
                     .ToListAsync(cancellationToken);
 
@@ -1929,11 +1929,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Select(pr => pr.POId)
                     .Distinct()
                     .ToList();
-                var supplierAtlEntries = await _dbContext.FilprideDeliveryReceiptDetails
+                var supplierAtlEntries = await _dbContext.DeliveryReceiptDetails
                     .Where(d => purchaseReportDeliveryReceiptIds.Contains(d.DeliveryReceiptId)
                                 && purchaseReportPoIds.Contains(d.PurchaseOrderId)
                                 && atlNos.Contains(d.AuthorityToLoadNo!))
-                    .Join(_dbContext.FilprideBookAtlDetails,
+                    .Join(_dbContext.BookAtlDetails,
                         drDetail => new
                         {
                             drDetail.AuthorityToLoadId,
@@ -1998,7 +1998,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                         : 0m;
                     var freightNetOfWht = RoundToFour(freightAmount - freightWhtAmount);
 
-                    FilprideAuthorityToLoad? atl;
+                    AuthorityToLoad? atl;
                     if (pr.AuthorityToLoadNo != null)
                     {
                         atlLookup.TryGetValue(pr.AuthorityToLoadNo, out atl);
@@ -2319,8 +2319,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -2848,8 +2848,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate gross margin report quest pdf", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate gross margin report quest pdf", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -2906,7 +2906,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Where(dr => dr.HasReceivingReport)
                     .Select(dr => dr.DeliveryReceiptId)
                     .ToList();
-                var receivingReports = await _unitOfWork.FilprideReceivingReport
+                var receivingReports = await _unitOfWork.ReceivingReport
                     .GetAllAsync(rr => rr.DeliveryReceiptId.HasValue
                                        && rr.PostedBy != null
                                        && drIds.Contains(rr.DeliveryReceiptId.Value), cancellationToken);
@@ -2928,7 +2928,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var totalCommissionAmount = 0m;
                 var totalNetMarginPerLiter = 0m;
                 var totalNetMarginAmount = 0m;
-                var repoCalculator = _unitOfWork.FilpridePurchaseOrder;
+                var repoCalculator = _unitOfWork.PurchaseOrder;
 
                 #endregion -- Initialize "total" Variables for operations --
 
@@ -3495,8 +3495,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate gross margin report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate gross margin report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -3543,7 +3543,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
             try
             {
-                var receivingReports = await _dbContext.FilprideReceivingReports
+                var receivingReports = await _dbContext.ReceivingReports
                     .Include(rr => rr.PurchaseOrder).ThenInclude(po => po!.Supplier)
                     .Where(rr => rr.Company == companyClaims && rr.Date <= model.DateTo)
                     .OrderBy(rr => rr.Date.Year)
@@ -3688,7 +3688,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                                 var grandTotalEndingGross = 0m;
                                 var grandTotalEndingEwt = 0m;
                                 var grandTotalEndingNetAmount = 0m;
-                                var repoCalculator = _unitOfWork.FilpridePurchaseOrder;
+                                var repoCalculator = _unitOfWork.PurchaseOrder;
 
                                 #endregion -- Initialize Variable for Computation
 
@@ -3882,8 +3882,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate trade payable report quest pdf", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate trade payable report quest pdf", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -3924,7 +3924,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var currencyFormat = "#,##0.00";
 
-                var allCv = await _dbContext.FilprideCheckVoucherHeaders
+                var allCv = await _dbContext.CheckVoucherHeaders
                     .Where(cv => cv.Category == "Trade" && cv.CvType == "Supplier" && cv.Date <= dateTo)
                     .Include(cv => cv.Supplier)
                     .ToListAsync(cancellationToken);
@@ -3939,12 +3939,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Select(cv => cv.CheckVoucherHeaderId)
                     .ToList();
 
-                var cvPaymentsOfSelected = await _dbContext.FilprideCVTradePayments
+                var cvPaymentsOfSelected = await _dbContext.CvTradePayments
                     .Where(ctp => cvIdOfSelected.Contains(ctp.DocumentId) && ctp.DocumentType == "RR")
                     .Include(ctp => ctp.CV)
                     .ToListAsync(cancellationToken);
 
-                var cvPaymentsOfPrevious = await _dbContext.FilprideCVTradePayments
+                var cvPaymentsOfPrevious = await _dbContext.CvTradePayments
                     .Where(ctp => cvIdOfPrevious.Contains(ctp.DocumentId) && ctp.DocumentType == "RR")
                     .Include(ctp => ctp.CV)
                     .ToListAsync(cancellationToken);
@@ -4095,7 +4095,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var row = 8;
 
-                IEnumerable<IGrouping<MonthYear, FilprideReceivingReport>> loopingMainRrGroupedByMonthYear = null!;
+                IEnumerable<IGrouping<MonthYear, ReceivingReport>> loopingMainRrGroupedByMonthYear = null!;
                 IEnumerable<IGrouping<MonthYear, RrWithAmountPaidViewModel>> loopingSecondRrGroupedByMonthYear = null!;
 
                 #region == Initialize Variables ==
@@ -4141,7 +4141,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var grandTotalEwtEnding = 0m;
                 var grandTotalNetEnding = 0m;
 
-                var repoCalculator = _unitOfWork.FilpridePurchaseOrder;
+                var repoCalculator = _unitOfWork.PurchaseOrder;
 
                 #endregion == Initialize Variables ==
 
@@ -4584,8 +4584,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate trade payable report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate trade payable report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -4712,7 +4712,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToList();
 
                 int row = 5;
-                var repoCalculator = _unitOfWork.FilpridePurchaseOrder;
+                var repoCalculator = _unitOfWork.PurchaseOrder;
                 var productList = GetOrderedProductNames(
                     groupBySupplierTermsAndType.SelectMany(group => group),
                     po => po.ProductName);
@@ -5307,8 +5307,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate accounts payable report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate accounts payable report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -5334,10 +5334,10 @@ namespace IBSWeb.Areas.Filpride.Controllers
         {
             var viewModelBook = new ViewModelBook();
 
-            var distinctSupplierIds = await _dbContext.FilpridePurchaseOrders
+            var distinctSupplierIds = await _dbContext.PurchaseOrders
                 .Select(po => po.SupplierId).Distinct().ToListAsync(cancellationToken);
 
-            var suppliers = await _dbContext.FilprideSuppliers
+            var suppliers = await _dbContext.Suppliers
                 .Where(s => distinctSupplierIds.Contains(s.SupplierId))
                 .ToListAsync(cancellationToken);
 
@@ -5378,7 +5378,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     return RedirectToAction(nameof(LiquidationReport));
                 }
 
-                var purchaseOrder = await _unitOfWork.FilpridePurchaseOrder
+                var purchaseOrder = await _unitOfWork.PurchaseOrder
                     .GetAsync(po => po.PurchaseOrderId == viewModel.PurchaseOrderId, cancellationToken);
 
                 if (purchaseOrder == null)
@@ -5390,7 +5390,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 string currencyFormatTwoDecimal = "#,##0.00";
                 string currencyFormatFourDecimal = "#,##0.0000";
 
-                var receivingReports = (await _unitOfWork.FilprideReceivingReport
+                var receivingReports = (await _unitOfWork.ReceivingReport
                         .GetAllAsync(rr => rr.POId == viewModel.PurchaseOrderId
                                            && rr.WithdrawalCertificate != null
                                            && rr.Date.Month == viewModel.Period.Value.Month
@@ -5510,7 +5510,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 worksheet.Cells[19, 4].Value = purchaseOrder.Terms;
                 worksheet.Cells[20, 3].Value = "Due Date: ";
 
-                var dueDate = await _unitOfWork.FilpridePurchaseOrder.ComputeDueDateAsync(purchaseOrder.Terms, purchaseOrder.Date, cancellationToken);
+                var dueDate = await _unitOfWork.PurchaseOrder.ComputeDueDateAsync(purchaseOrder.Terms, purchaseOrder.Date, cancellationToken);
 
                 worksheet.Cells[20, 4].Value = dueDate.ToString("MMM dd, yyyy");
 
@@ -6086,11 +6086,11 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Where(rr => !string.IsNullOrWhiteSpace(rr))
                     .Distinct()
                     .ToList();
-                var supplierAtlEntries = await _dbContext.FilprideDeliveryReceiptDetails
+                var supplierAtlEntries = await _dbContext.DeliveryReceiptDetails
                     .Where(d => receivingReportDeliveryReceiptIds.Contains(d.DeliveryReceiptId)
                                 && receivingReportPoIds.Contains(d.PurchaseOrderId)
                                 && receivingReportAtlNos.Contains(d.AuthorityToLoadNo!))
-                    .Join(_dbContext.FilprideBookAtlDetails,
+                    .Join(_dbContext.BookAtlDetails,
                         drDetail => new
                         {
                             drDetail.AuthorityToLoadId,
@@ -6114,7 +6114,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 foreach (var rr in receivingReports)
                 {
-                    var rrWithSameWC = (await _unitOfWork.FilprideReceivingReport
+                    var rrWithSameWC = (await _unitOfWork.ReceivingReport
                         .GetAllAsync(wcs => wcs.WithdrawalCertificate == rr.WithdrawalCertificate && wcs.ReceivingReportId != rr.ReceivingReportId, cancellationToken))
                         .ToList();
 
@@ -6282,8 +6282,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate liquidation report excel file", "Liquidation Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate liquidation report excel file", "Liquidation Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -6364,7 +6364,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     "GM/ltr",
                 };
 
-                var receivingReportsThisMonth = (await _unitOfWork.FilprideReceivingReport
+                var receivingReportsThisMonth = (await _unitOfWork.ReceivingReport
                         .GetAllAsync(rr =>
                                 rr.Status == "Posted" &&
                                 rr.Date.Month == viewModel.Period.Value.Month &&
@@ -6384,7 +6384,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToList();
                 var listOfProducts = rrsByProduct.Select(rr => rr.Key).ToList();
 
-                var receivingReportsLastMonth = (await _unitOfWork.FilprideReceivingReport
+                var receivingReportsLastMonth = (await _unitOfWork.ReceivingReport
                         .GetAllAsync(rr =>
                                 rr.Status == "Posted" &&
                                 rr.Date < basePeriod,
@@ -7528,8 +7528,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase journal report excel file", "Liquidation Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate purchase journal report excel file", "Liquidation Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -7580,7 +7580,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var currencyFormat = "#,##0.00";
 
-                var allCv = await _dbContext.FilprideCheckVoucherHeaders
+                var allCv = await _dbContext.CheckVoucherHeaders
                     .Where(cv => cv.Category == "Trade" && cv.CvType == "Hauler" && cv.Date <= dateTo)
                     .Include(cv => cv.Supplier)
                     .ToListAsync(cancellationToken);
@@ -7595,12 +7595,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .Select(cv => cv.CheckVoucherHeaderId)
                     .ToList();
 
-                var cvPaymentsOfSelected = await _dbContext.FilprideCVTradePayments
+                var cvPaymentsOfSelected = await _dbContext.CvTradePayments
                     .Where(ctp => cvIdOfSelected.Contains(ctp.DocumentId) && ctp.DocumentType == "DR")
                     .Include(ctp => ctp.CV)
                     .ToListAsync(cancellationToken);
 
-                var cvPaymentsOfPrevious = await _dbContext.FilprideCVTradePayments
+                var cvPaymentsOfPrevious = await _dbContext.CvTradePayments
                     .Where(ctp => cvIdOfPrevious.Contains(ctp.DocumentId) && ctp.DocumentType == "DR")
                     .Include(ctp => ctp.CV)
                     .ToListAsync(cancellationToken);
@@ -7750,7 +7750,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 #endregion == Header Row ==
 
                 var row = 8;
-                IEnumerable<IGrouping<MonthYear, FilprideDeliveryReceipt>> loopingMainDrGroupedByMonthYear = null!;
+                IEnumerable<IGrouping<MonthYear, DeliveryReceipt>> loopingMainDrGroupedByMonthYear = null!;
                 IEnumerable<IGrouping<MonthYear, DrWithAmountPaidViewModel>> loopingSecondDrGroupedByMonthYear = null!;
                 IEnumerable<IGrouping<MonthYear, DrWithAmountPaidViewModel>> loopingThirdDrGroupedByMonthYear = null!;
 
@@ -7797,7 +7797,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 var grandTotalEwtEnding = 0m;
                 var grandTotalNetEnding = 0m;
 
-                var repoCalculator = _unitOfWork.FilpridePurchaseOrder;
+                var repoCalculator = _unitOfWork.PurchaseOrder;
 
                 #endregion == Initialize Variables ==
 
@@ -8243,8 +8243,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate hauler payable report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate hauler payable report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -8268,7 +8268,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPurchaseOrderListBySupplier(int supplierId, CancellationToken cancellationToken)
         {
-            var purchaseOrderList = await _dbContext.FilpridePurchaseOrders
+            var purchaseOrderList = await _dbContext.PurchaseOrders
                 .Where(po => po.SupplierId == supplierId)
                 .OrderBy(po => po.PurchaseOrderNo)
                 .Select(po => new SelectListItem
@@ -8445,13 +8445,13 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(
+                AuditTrail auditTrailBook = new(
                     GetUserFullName(),
                     "Generate journal voucher report excel file",
                     "Journal Voucher Report",
                     companyClaims
                 );
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -8503,7 +8503,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var statusFilter = NormalizeStatusFilter(model.StatusFilter);
 
-                var cvTradePayments = await _dbContext.FilprideCVTradePayments
+                var cvTradePayments = await _dbContext.CvTradePayments
                     .Where(x => x.DocumentType == "RR" &&
                                 x.CV.Company == companyClaims &&
                                 x.CV.Date >= dateFrom &&
@@ -8515,7 +8515,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToListAsync(cancellationToken);
 
                 var receivingReportId = cvTradePayments.Select(x => x.DocumentId).Distinct().ToList();
-                var receivingReports = await _dbContext.FilprideReceivingReports
+                var receivingReports = await _dbContext.ReceivingReports
                     .Where(x => receivingReportId.Contains(x.ReceivingReportId) &&
                                 (statusFilter == "ValidOnly"
                                     ? x.PostedBy != null
@@ -8613,7 +8613,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     var taxPercent = rr.PurchaseOrder!.Supplier!.WithholdingTaxPercent ?? rr.TaxPercentage;
 
                     var withHoldingTaxAmount = rr.PurchaseOrder!.Supplier!.TaxType == SD.TaxType_WithTax
-                        ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
+                        ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
                         : 0m;
 
                     worksheet.Cells[row, col].Value = rr.SupplierInvoiceNumber; col++;
@@ -8678,8 +8678,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Fuel report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Fuel report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -8731,7 +8731,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var statusFilter = NormalizeStatusFilter(model.StatusFilter);
 
-                var cvTradePayments = await _dbContext.FilprideCVTradePayments
+                var cvTradePayments = await _dbContext.CvTradePayments
                     .Where(x => x.DocumentType == "DR" &&
                                 x.CV.CvType == "Commission" &&
                                 x.CV.Company == companyClaims &&
@@ -8744,7 +8744,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToListAsync(cancellationToken);
 
                 var deliveryReceiptId = cvTradePayments.Select(x => x.DocumentId).Distinct().ToList();
-                var receivingReports = await _dbContext.FilprideReceivingReports
+                var receivingReports = await _dbContext.ReceivingReports
                     .Where(x => x.DeliveryReceiptId.HasValue &&
                                 deliveryReceiptId.Contains(x.DeliveryReceiptId.Value) &&
                                 (statusFilter == "ValidOnly"
@@ -8847,7 +8847,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                             var taxPercent = rr.PurchaseOrder!.Supplier!.WithholdingTaxPercent ?? rr.TaxPercentage;
 
                             var withHoldingTaxAmount = rr.PurchaseOrder!.Supplier!.TaxType == SD.TaxType_WithTax
-                                ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
+                                ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
                                 : 0m;
 
                             worksheet.Cells[row, col].Value = rr.SupplierInvoiceNumber; col++;
@@ -8895,8 +8895,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Commissionee report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Commissionee report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -8947,7 +8947,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 var statusFilter = NormalizeStatusFilter(model.StatusFilter);
 
-                var cvTradePayments = await _dbContext.FilprideCVTradePayments
+                var cvTradePayments = await _dbContext.CvTradePayments
                     .Where(x => x.DocumentType == "DR" &&
                                 x.CV.CvType == "Hauler" &&
                                 x.CV.Company == companyClaims &&
@@ -8960,7 +8960,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                     .ToListAsync(cancellationToken);
 
                 var deliveryReceiptId = cvTradePayments.Select(x => x.DocumentId).Distinct().ToList();
-                var receivingReports = await _dbContext.FilprideReceivingReports
+                var receivingReports = await _dbContext.ReceivingReports
                     .Where(x => x.DeliveryReceiptId.HasValue &&
                                 deliveryReceiptId.Contains(x.DeliveryReceiptId.Value) &&
                                 (statusFilter == "ValidOnly"
@@ -9063,7 +9063,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                             var taxPercent = rr.PurchaseOrder!.Supplier!.WithholdingTaxPercent ?? rr.TaxPercentage;
 
                             var withHoldingTaxAmount = rr.PurchaseOrder!.Supplier!.TaxType == SD.TaxType_WithTax
-                                ? _unitOfWork.FilprideReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
+                                ? _unitOfWork.ReceivingReport.ComputeEwtAmount(netOfVatAmount, taxPercent)
                                 : 0m;
 
                             worksheet.Cells[row, col].Value = rr.SupplierInvoiceNumber; col++;
@@ -9111,8 +9111,8 @@ namespace IBSWeb.Areas.Filpride.Controllers
 
                 #region -- Audit Trail --
 
-                FilprideAuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Hauler/Freight report excel file", "Accounts Payable Report", companyClaims);
-                await _unitOfWork.FilprideAuditTrail.AddAsync(auditTrailBook, cancellationToken);
+                AuditTrail auditTrailBook = new(GetUserFullName(), "Generate Trade Supplier Hauler/Freight report excel file", "Accounts Payable Report", companyClaims);
+                await _unitOfWork.AuditTrail.AddAsync(auditTrailBook, cancellationToken);
 
                 #endregion -- Audit Trail --
 
@@ -9134,3 +9134,4 @@ namespace IBSWeb.Areas.Filpride.Controllers
         #endregion
     }
 }
+

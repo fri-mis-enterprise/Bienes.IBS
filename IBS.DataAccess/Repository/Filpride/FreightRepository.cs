@@ -4,7 +4,7 @@ using IBS.Models.Filpride;
 
 namespace IBS.DataAccess.Repository.Filpride
 {
-    public class FreightRepository : Repository<FilprideFreight>, IFreightRepository
+    public class FreightRepository : Repository<Freight>, IFreightRepository
     {
         private readonly ApplicationDbContext _db;
 
