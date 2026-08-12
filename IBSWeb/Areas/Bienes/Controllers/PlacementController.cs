@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace IBSWeb.Areas.Bienes.Controllers
 {
     [Area(nameof(Bienes))]
-    [CompanyAuthorize(nameof(Bienes))]
+    [CompanyAuthorize(nameof(Filpride))]
     public class PlacementController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
