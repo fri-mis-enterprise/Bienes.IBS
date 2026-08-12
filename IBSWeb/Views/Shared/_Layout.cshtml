@@ -4,14 +4,10 @@
 
 @{
     var selectedCompany = string.Empty;
-    var selectedStation = string.Empty;
-
     if (SignInManager.IsSignedIn(User))
     {
         selectedCompany = User.Claims.FirstOrDefault(c => c.Type == "Company")?.Value;
-        selectedStation = User.Claims.FirstOrDefault(c => c.Type == "StationCode")?.Value;
     }
-    var userDepartment = ViewBag.GetUserDepartment;
 
     var userName = UserManager.GetUserName(this.User);
 

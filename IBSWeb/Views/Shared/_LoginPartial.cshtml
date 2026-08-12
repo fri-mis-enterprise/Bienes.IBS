@@ -1,15 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
 
 @{
     var company = string.Empty;
-    var stationCode = string.Empty;
 
     if (SignInManager.IsSignedIn(User))
     {
         company = User.Claims.FirstOrDefault(c => c.Type == "Company")?.Value;
-        stationCode = User.Claims.FirstOrDefault(c => c.Type == "StationCode")?.Value;
     }
 }
 
@@ -20,7 +17,7 @@
         {
             <li class="nav-item">
                 @*<a id="manage" class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>*@
-                <a id="manage" class="nav-link" href="#" title="You're currently login to this company.">@company.ToUpper() @stationCode?.ToUpper()</a>
+                <a id="manage" class="nav-link" href="#" title="You're currently login to this company.">BIENES</a>
             </li>
         }
         <li class="nav-item">
