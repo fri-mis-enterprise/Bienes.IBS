@@ -45,7 +45,7 @@
         - '--set-env-vars'
         - 'ASPNETCORE_ENVIRONMENT=Production'
         - '--set-secrets'
-        - 'ConnectionStrings__DefaultConnection=DefaultConnection:latest,Calendarific__ApiKey=CalendarificApiKey:latest'
+        - 'ConnectionStrings__BienesConnection=SyvillConnection:latest,Calendarific__ApiKey=CalendarificApiKey:latest'
         - '--set-cloudsql-instances'
         - 'integrated-business-system:us-central1:ibs-instance'
         - '--quiet'
@@ -57,8 +57,9 @@ images:
 
 substitutions:
   _AR_HOSTNAME: us-central1-docker.pkg.dev
+  _AR_REPOSITORY: ibsweb
   _DEPLOY_REGION: us-central1
-  _SERVICE_NAME: ibsweb
+  _SERVICE_NAME: bienes-ibsweb
   _PLATFORM: managed
 
 options:
