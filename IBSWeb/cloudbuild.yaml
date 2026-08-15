@@ -3,7 +3,7 @@
     args:
         - build
         - '-t'
-        - '$_AR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME/filpride/$_SERVICE_NAME:$COMMIT_SHA'
+        - '$_AR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME/bienes/$_SERVICE_NAME:$COMMIT_SHA'
         - '-f'
         - 'IBSWeb/Dockerfile'
         - .
