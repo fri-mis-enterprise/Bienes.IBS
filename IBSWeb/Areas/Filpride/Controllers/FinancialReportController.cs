@@ -390,7 +390,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 row++;
 
 
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "Filpride.jpg");
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "bienes.png");
                 var imageFile = new FileInfo(imagePath);
 
                 if (imageFile.Exists)
@@ -846,7 +846,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 }
                 row++;
 
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "Filpride.jpg");
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "bienes.png");
                 var imageFile = new FileInfo(imagePath);
 
                 if (imageFile.Exists)
@@ -1311,7 +1311,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 worksheet.Cells["B1"].Value = "FILPRIDE RESOURCES INC.";
                 worksheet.Cells["B1"].Style.HorizontalAlignment = alignmentCenter;
 
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "Filpride.jpg");
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "bienes.png");
                 var imageFile = new FileInfo(imagePath);
 
                 if (imageFile.Exists)
@@ -1851,7 +1851,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 row++;
 
 
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "Filpride.jpg");
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "bienes.png");
                 var imageFile = new FileInfo(imagePath);
 
                 if (imageFile.Exists)
@@ -2299,7 +2299,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 row++;
 
 
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "Filpride.jpg");
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "bienes.png");
                 var imageFile = new FileInfo(imagePath);
 
                 if (imageFile.Exists)

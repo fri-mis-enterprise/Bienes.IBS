@@ -6,6 +6,12 @@ and this project adheres to **Semantic Versioning (SemVer)**.
 
 ---
 
+## [v1.0.1] - 2026-08-19
+### Changed
+- Updated print and preview document headers to use **BIENES DE ORO** with the address `Room 1401 -1402 Jollibee Centre San Miguel Avenue, Pasig City`.
+- Removed the TIN line from the affected print and preview document heading blocks.
+- Updated print, preview, and financial report logo references from `Filpride.jpg` / `bienes.jpg` to the newly added `bienes.png`.
+
 ## [v1.0.0] - 2026-8-11
 ### Added
 - Initial implementation of **IBSWeb – Integrated Business System**.
